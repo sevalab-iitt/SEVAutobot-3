@@ -12,7 +12,8 @@
       Display the detected color name.
       Activate the buzzer. 
 ### Color Recognition -
-| Header 1 | Header 2 |
-|----------|----------|
-| Cell A1  | Cell B1  |
-| Cell A2  | Cell B2  |      
+|   Color  |  RGB LED | Buzzer | Robot Motion |
+|----------|----------|--------|--------------|
+|    Red   |   Red    |  Beep  |     Nod      |
+|   Green  |  Green   |  Beep  |  Shake Head  |
+|    Blue  |   Blue   |  Beep  |  Shake Head  |
