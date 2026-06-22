@@ -13,7 +13,7 @@
       Activate the buzzer. 
 ### Color Recognition -
       | Color | RGB LED | Buzzer | Robot Motion |
-      | --- | --- | --- |
-      | Red | Red | Beep | Node |
-      | Green | Green | Beep | Shake Head |
-      | Blue | Blue | Beep | Shake Head |
+      | ---   | :----   | :----: |  -----:      |
+      |       |         |        |              |
+      |       |         |        |              |
+      |       |         |        |              |
