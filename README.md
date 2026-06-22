@@ -1,5 +1,5 @@
 # TurboPi Documentation
-...
+https://docs.hiwonder.com/projects/TurboPi/en/advanced/_static/media/chapter_1/1.1/image0.png
 
 ## Overview
 
