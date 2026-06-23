@@ -6,7 +6,8 @@
     CSI camera integrated into a 2-DOF (Degrees of Freedom) pan-tilt mount
     Integrated OmniVision or Sony IMX sensor - Glowy Ultrasonic Sensor.
     Resolution - 640 × 480 - 5,10,15,20,25,30 are supported framerates.
-    <img width="452" height="171" alt="Screenshot 2026-06-23 102231" src="https://github.com/user-attachments/assets/b5ade8ee-e7f5-4214-bd22-8af769da0791" />
+    <img width="452" height="171" alt="Screenshot 2026-06-23 102231" src="https://github.com/user-attachments/assets/35b415f0-30a0-43c1-8ab7-df997043b937" />
+
     YUVY pixel format,it groups 2 pixels into 4 byte sequence
     Size of one image [one frame] 640×480×2 = 614,400 (~600 kb) then for 30fps 614,400×30 = 18,432,000 bytes/second (~18.4Mbps) 
     Rec 709 Transfer function - used to converts raw light into digital data
