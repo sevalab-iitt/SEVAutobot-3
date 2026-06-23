@@ -194,10 +194,12 @@ Output	Good for Pi 4B!
 
 
 Install V4L2 tools:
+v4l-utils is a collection of command-line utilities and libraries used to configure, test, and handle multimedia devices on Linux. It is specifically designed to work with the Video4Linux (V4L2) subsystem in the Linux kernel, which manages hardware like webcams, TV tuner cards, video capture cards, and remote controls.
 
 ```bash
 sudo apt install v4l-utils
 ```
+<img width="463" height="106" alt="image" src="https://github.com/user-attachments/assets/35bdedaf-f92e-4606-8325-72fbada8acf1" />
 
 Verify camera devices:
 
