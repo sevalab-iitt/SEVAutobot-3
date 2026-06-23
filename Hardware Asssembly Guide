@@ -1,3 +1,29 @@
-# Hardware Assembly 
-        ## Mecahnical Chasis Assembly 
-            
+HiWonder provides a YouTube playlist of assembly instructions. However, note that the videos for some reason are out of order, and quite a few feature videos are mixed in among the others which can make it difficult to work out precisely what to watch and in what order.
+
+The correct order of the assembly vidoes appear to be as follows:
+
+Check contents
+
+Attach the expansion board to the Raspberry Pi
+
+Optional: check the overview of the Pi expansion board: https://youtu.be/k4s9Au3EF6Y?si=PgsI46sfaEnbTByz
+TurboPi Assembly: Assemble Raspberry Pi + Expansion Board: https://youtu.be/52N_oKo334s?si=4og4as8ZxAK10uI2
+Attach the Rasberry Pi + expansion board to the main body
+
+TurboPi Assembly: Install Controller + Line Follower: https://youtu.be/F5LvTlMeYEM?si=ZsP-zIZYwazmX7WW
+
+Note: it is crucial to do this step, including the cabling, before installing the motors and wheels. (don't repeat my misstake...)
+
+Install motors and wheels
+
+TurboPi Assembly: Install Motors + Wheels + Battery Holder Case: https://youtu.be/erCFkrZ1qKg?si=nWRbYBGvE_l8QWKt
+
+Assmble the "head" with the camera
+
+TurboPi Assembly: Assemble Servo+Ultrasonic Sensor+Camera: https://youtu.be/46S2ZhOeooE?si=OvOc0oJ7FajFvmZj
+
+Note: maybe I did something wrong, but I couldn't really get the horizontal servo to "stick" when only mounted the way it is done in the clip, so I used some of the screw nuts to hold it into place.
+
+Last step: attach the head to the body
+
+TurboPi Assembly: Assemble Pan Tilt + Expansion Board Cover: https://youtu.be/vKcvwtmXHYs?si=jLAC-dm6xtmcSF
