@@ -105,6 +105,8 @@ Verification:
 ```bash
 v4l2-ctl --list-devices
 ```
+<img width="407" height="423" alt="image" src="https://github.com/user-attachments/assets/87690037-74d0-47c4-898e-304e8c9072cf" />
+
 
 ---
 
@@ -176,6 +178,18 @@ Future integration may include ROS 2 Humble for advanced robotics applications.
 * Git
 * VS Code (Remote SSH)
 * V4L2 Utilities
+  
+## extras (Not mandatory but good to use)
+
+* V2 (Virtual Network Computing)
+* Instead of relaying on battery shift to adapter power supply
+Output	Good for Pi 4B!
+5V ⎓ 1A	❌ No
+5V ⎓ 2A	⚠️ Not recommended
+5V ⎓ 3A	✅ Good (OS, Camera and Running code)
+5V ⎓ 4A or higher	✅ Good (if we want to access other parts of the robo like servos and movements)
+* 
+
 
 Install V4L2 tools:
 
