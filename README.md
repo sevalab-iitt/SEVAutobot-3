@@ -102,13 +102,13 @@ Camera → Vision Processing → Decision Module → Motion Controller → Motor
 ## Quick Start
 
 1. Power on TurboPi.
-   1.1. Check all the lights are on like shown in the image.
-   1.2. Also wait till you hear a beep sound (The 1x beep sound means Raspberry pi OS is booted) 
+  <br> 1.1. Check all the lights are on like shown in the image.
+  <br> 1.2. Also wait till you hear a beep sound (The 1x beep sound means Raspberry pi OS is booted) 
 
 
 2. Make sure to connect it to the ethernet
-   2.1 Check whether you see green and yellow lights ON or FLICKERING if it's not means it is not connected.
-   2.2
+  <br> 2.1 Check whether you see green and yellow lights ON or FLICKERING if it's not means it is not connected.
+  
 
 3. Connect via SSH -> ssh pi@192.168.0.102 (Refer Software Setup.md)
     
