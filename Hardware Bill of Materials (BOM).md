@@ -1,7 +1,7 @@
 # Hardware Bill of Materials (BOM)
 
-| Item No. | Component                         | Quantity | Description                             |
-| -------- | --------------------------------- | -------- | --------------------------------------- |
+| Item No. | Component                         | Quantity | Description                             | Manufacturer          | Model Name        | Specifications         | Cost        | Purchase Link   |
+| -------- | --------------------------------- | -------- | --------------------------------------- | --------------------------------------------------------------------------------------------------
 | 1        | Raspberry Pi 4 Model B (8 GB RAM) | 1        | Main processing unit                    |
 | 2        | MicroSD Card                      | 1        | Operating system and storage            |
 | 3        | USB HD Camera                     | 1        | Vision sensor for image acquisition     |
@@ -22,12 +22,6 @@
 | 18       | Jumper Cables and Connectors      | Multiple | Hardware connections                    |
 
 
-
-Manufacturer
-Model Number
-Specifications
-Purchase Link
-Cost (optional) we will add it later.
 
 lsusb
 ls ~/TurboPi/HiwonderSDK
