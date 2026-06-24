@@ -1,1 +1,28 @@
 
+# Project Overview
+
+TurboPi is an AI-powered mobile robotics platform developed by Hiwonder and built around the Raspberry Pi 4B. The robot combines computer vision, sensor integration, and mecanum-wheel mobility to support robotics education, research, and autonomous navigation experiments.
+
+The platform features a USB camera, ultrasonic sensor, infrared line tracking sensors, servo-controlled pan-tilt mechanism, and a four-wheel mecanum drive system. These components enable the robot to perform tasks such as color detection, object tracking, face tracking, line following, obstacle avoidance, and remote operation.
+
+This documentation provides a detailed analysis of the TurboPi hardware architecture, software stack, camera system, motion control modules, and operational workflow. It also serves as a reference for configuring, operating, troubleshooting, and extending the robot for future robotics and computer vision projects.
+
+## Objectives
+
+* Understand the hardware and software architecture of TurboPi.
+* Document the complete system configuration.
+* Analyze the vision and motion control subsystems.
+* Explore dataset collection and computer vision applications.
+* Provide a reference guide for future development and research.
+
+## Key Features
+
+* Raspberry Pi 4B (8 GB RAM) based control system
+* USB camera for computer vision applications
+* Mecanum wheel omnidirectional drive
+* Servo-controlled camera pan-tilt mechanism
+* Color detection and tracking
+* Face tracking and gesture recognition
+* Line following and obstacle avoidance
+* SSH-based remote access and monitoring
+* Expandable platform for AI and robotics research
