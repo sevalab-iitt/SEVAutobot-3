@@ -42,3 +42,5 @@ Raspberry Pi software Configuration Tool will open click on System Options then 
 
 If there shows an error like No wireless interface found then open terminal and type rfkill list if you see something like software 
 
+### 
+
