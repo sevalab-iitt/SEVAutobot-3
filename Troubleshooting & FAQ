@@ -25,7 +25,34 @@
 - Software configuration issue 
 
 **Solution**
-- Check
+- Check and reconnect the camera cable
+- Restart the robot
+- Clean the camera lens if image quality is poor
+
+### Unable to connect to Wi-Fi
+
+**Possible Causes**
+- Incorrect Wi-Fi credentials.
+- Weak wireless signal
+- Network configuration issue
+
+**Solution**
+- Verify the SSID and password.
+- Restart the robot and router
+- Confirm both devices are connected to the same network
+
+### Motors do not move
+
+**Possible Causes**
+- Low battery voltage.
+- Loose motor connections.
+- Motor driver not initialized.
+
+**Solution**
+- Recharge the battery.
+- Inspect all motor wiring.
+- Run a motor test program.
+- Verify motor driver connections.
 
 
 
