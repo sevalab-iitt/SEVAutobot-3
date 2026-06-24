@@ -4,7 +4,7 @@
 
 ## Overview
 
-TurboPi is an open-source AI vision car designed for beginners, powered by the Raspberry Pi. It features a Mecanum-wheel chassis for omnidirectional movement, a 2-DOF HD wide-angle camera, and supports Python programming with OpenCV and YOLO26 for image processing and object detection. TurboPi enables a range of intelligent functions such as color recognition, object tracking, and autonomous driving. The TurboPi Advanced Kit is powered by the ROS2 operating system and integrates a Multimodal Large AI model. This allows it to perceive its environment, plan actions, and execute tasks with enhanced flexibility—enabling more advanced applications in embodied AI.
+TurboPi is an open-source AI vision car designed for beginners, powered by the Raspberry Pi. It features a Mecanum-wheel chassis for omnidirectional movement, a 2-DOF HD wide-angle camera, and supports Python programming with OpenCV and YOLO26 for image processing and object detection. TurboPi enables a range of intelligent functions such as color recognition, object tracking, and autonomous driving. The TurboPi Advanced Kit is powered by the ROS2 operating system and integrates a Multimodal Large AI model. This allows it to perceive its environment, plan actions, and execute tasks with enhanced flexibility-enabling more advanced applications in embodied AI.
 
 This documentation provides detailed information about the hardware architecture, software setup, camera system, robot control, dataset collection, troubleshooting procedures and Etc.
 
@@ -37,69 +37,40 @@ Camera → Vision Processing → Decision Module → Motion Controller → Motor
 ## Repository Structure
  
 ```text
-/Turbopi-IIT-Tirupati/
+/sevalab-iitt/SEVAutobot-3
 ├── LOGS
 │   ├── EXTRAS.md
 │   ├── 
 │   ├── 
-│   ├── 
-│   ├── 
-│   ├── 
-│   ├── 
-│   ├── 
-│   ├── 
-│   └── 
 ├── ROS
 |   ├── Communication Architecture 
-├── Functions
-│   ├── Avoidance.py
-│   ├── ColorDetect.py
-│   ├── ColorTracking.py
-│   ├── ColorWarning.py
-│   ├── EmptyFunc.py
-│   ├── FaceTracking.py
-│   ├── GestureRecognition.py
-│   ├── ImgAddText.py
-│   ├── lab_adjust.py
-│   ├── LineFollower.py
-│   ├── __pycache__
-│   ├── QuickMark.py
-│   ├── RemoteControl.py
-│   ├── Running.py
-│   └── VisualPatrol.py
-├── HiwonderSDK
-│   ├── Board.py
-│   ├── BuzzerControlDemo.py
-│   ├── FourInfrared.py
-│   ├── hardware_test.py
-│   ├── mecanum.py
-│   ├── Misc.py
-│   ├── MotorControlDemo.py
-│   ├── PID.py
-│   ├── PWMServoControlDemo.py
-│   ├── __pycache__
-│   ├── RGBControlDemo.py
-│   └── Sonar.py
-├── lab_config.yaml
-├── MecanumControl
-│   ├── Car_Drifting_Demo.py
-│   ├── Car_Forward_Demo.py
-│   ├── Car_Move_Demo.py
-│   ├── Car_Slant_Demo.py
-│   └── Car_Turn_Demo.py
-├── MjpgServer.py
-├── __pycache__
-│   ├── Camera.cpython-39.pyc
-│   ├── MjpgServer.cpython-39.pyc
-│   ├── RPCServer.cpython-39.pyc
-│   └── yaml_handle.cpython-39.pyc
-├── RPCServer.py
-├── servo_config.yaml
-├── TurboPi.py
-└── yaml_handle.py
+├── 
+│   ├── Camera & Vision System.md
+│   ├── Dataset Collection Guide
+│   ├── Directory Structure.md
+│   ├── Future Improvement
+│   ├── Hardware Assembly Guide
+│   ├── Hardware Bill of Materials(BOM).md
+│   ├── Motion Control.md
+│   ├── Operating Instructions.md
+│   ├── Software Setup.md
+│   ├── System Setup.md
+│   ├── System Architecture.md
+│   ├── Troubleshooting & FAQ
+│   ├── Wiring Diagram
+├── README.md
+├── LICENSE
+
 ```
 
 ## Quick Start
+
+### Go through 
+* Operating Instructions
+* Software Setup
+* System Architecture
+* Future Improvement
+* Troubleshooting & FAQ
 
 1. Power on TurboPi.
   <br> 1.1. Check all the lights are on like shown in the image.
