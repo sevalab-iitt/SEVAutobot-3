@@ -32,13 +32,13 @@ This documentation provides a detailed analysis of the TurboPi hardware architec
 
 ## Overview
 
-The Raspberry Pi 4 Model B incorporates the Broadcom VideoCore VI graphics processing unit (GPU). The GPU is primarily designed for graphics rendering, multimedia processing, and display output rather than general-purpose GPU computing (GPGPU).
+The Raspberry Pi 4 Model B is equipped with the **Broadcom VideoCore VI Graphics Processing Unit (GPU)**. This integrated GPU is responsible for graphics rendering, display output, and multimedia acceleration. Unlike desktop GPUs from NVIDIA or AMD, the VideoCore VI is not designed for general-purpose GPU computing (GPGPU) or deep learning workloads.
 
-Unlike NVIDIA GPUs, the VideoCore VI does not support CUDA or Tensor Cores, and therefore cannot accelerate PyTorch or TensorFlow models using CUDA.
+The GPU accelerates graphics-intensive operations such as OpenGL rendering, hardware video encoding/decoding, and HDMI display output. Machine learning frameworks such as PyTorch and TensorFlow execute on the CPU because the VideoCore VI does not provide CUDA support.
 
 ---
 
-## Hardware Specifications
+# Hardware Specifications
 
 | Parameter        | Specification                  |
 | ---------------- | ------------------------------ |
@@ -47,7 +47,7 @@ Unlike NVIDIA GPUs, the VideoCore VI does not support CUDA or Tensor Cores, and 
 | Graphics API     | OpenGL ES 3.1                  |
 | Video Encoding   | H.264                          |
 | Video Decoding   | H.264 (1080p60), H.265 (4Kp60) |
-| Display Support  | Dual HDMI Output               |
+| Display Support  | Dual Micro-HDMI                |
 | CUDA Support     | No                             |
 | TensorRT Support | No                             |
 | OpenCL Support   | Limited / Experimental         |
@@ -55,33 +55,227 @@ Unlike NVIDIA GPUs, the VideoCore VI does not support CUDA or Tensor Cores, and 
 
 ---
 
-## GPU Responsibilities
+# GPU Responsibilities
 
-The VideoCore VI GPU performs the following tasks:
+The integrated GPU performs the following tasks:
 
 * Desktop rendering
 * HDMI display output
-* OpenGL graphics acceleration
+* OpenGL ES graphics acceleration
 * Camera preview rendering
 * Hardware video encoding
 * Hardware video decoding
+* Multimedia processing
+
+The GPU is **not responsible** for executing AI models or accelerating neural network inference.
 
 ---
 
-## AI Workloads
+# Verification Procedure
 
-The GPU is **not** intended for deep learning inference or training.
-
-The following libraries execute on the CPU:
-
-* OpenCV
-* PyTorch
-* TensorFlow
-* Ultralytics YOLO
-
-Unless external AI accelerators are installed, all neural network inference is performed by the Raspberry Pi's ARM Cortex-A72 CPU.
+The following commands were used to inspect and verify the graphics subsystem.
 
 ---
+
+## 1. Verify Operating System
+
+**Purpose**
+
+Identify the operating system and kernel version running on the Raspberry Pi.
+
+**Command**
+
+```bash
+cat /etc/os-release
+uname -a
+```
+
+**Observation**
+
+The system is running Debian GNU/Linux 11 (Bullseye) on a 64-bit ARM (aarch64) architecture.
+
+---
+
+## 2. Verify GPU Firmware
+
+**Purpose**
+
+Confirm that the Raspberry Pi firmware responsible for initializing the VideoCore VI GPU is installed correctly.
+
+**Command**
+
+```bash
+vcgencmd version
+```
+
+**Expected Result**
+
+Displays the firmware build date and firmware version.
+
+**Observation**
+
+The firmware was successfully detected, confirming that the graphics subsystem is initialized correctly.
+
+---
+
+## 3. Check GPU Memory Allocation
+
+**Purpose**
+
+Display the amount of RAM allocated to the integrated GPU.
+
+**Command**
+
+```bash
+vcgencmd get_mem gpu
+```
+
+**Example Output**
+
+```text
+gpu=76M
+```
+
+**Observation**
+
+The Raspberry Pi reserves a portion of the system memory for graphics processing.
+
+---
+
+## 4. Check ARM Memory Allocation
+
+**Purpose**
+
+Determine the amount of memory allocated to the ARM processor.
+
+**Command**
+
+```bash
+vcgencmd get_mem arm
+```
+
+**Observation**
+
+This command confirms the memory distribution between the CPU and GPU.
+
+---
+
+## 5. Verify OpenGL Renderer
+
+**Purpose**
+
+Identify the graphics renderer currently used by the operating system.
+
+Install Mesa utilities:
+
+```bash
+sudo apt install mesa-utils
+```
+
+Run:
+
+```bash
+glxinfo | grep "OpenGL renderer"
+```
+<img width="850" height="60" alt="image" src="https://github.com/user-attachments/assets/2644d520-efc8-4460-95ab-cb0d694eb795" />
+
+**Observation**
+
+This command reports the graphics renderer responsible for OpenGL rendering.
+
+---
+
+## 6. Verify OpenGL Version
+
+**Purpose**
+
+Determine the supported OpenGL version.
+
+**Command**
+
+```bash
+glxinfo | grep "OpenGL version"
+```
+
+**Observation**
+
+Displays the OpenGL version supported by the graphics driver.
+
+---
+
+## 7. Verify Vulkan Support
+
+**Purpose**
+
+Determine whether Vulkan graphics acceleration is available.
+
+Install Vulkan tools:
+
+```bash
+sudo apt install vulkan-tools
+```
+
+Run:
+
+```bash
+vulkaninfo
+```
+<img width="461" height="464" alt="image" src="https://github.com/user-attachments/assets/0faaf9dc-e5e1-4311-8d00-e27c962a7462" />
+
+**Observation**
+
+The command returned:
+
+```text
+ERROR_INCOMPATIBLE_DRIVER
+Cannot create Vulkan instance
+```
+
+This indicates that Vulkan acceleration is not available in the current software configuration.
+
+---
+
+## 8. Verify PyTorch Installation
+
+**Purpose**
+
+Determine whether PyTorch is installed.
+
+**Command**
+
+```bash
+python3 -c "import torch; print(torch.__version__)"
+```
+
+**Observation**
+
+The command returned:
+
+```text
+ModuleNotFoundError: No module named 'torch'
+```
+
+indicating that PyTorch is not currently installed.
+
+---
+
+## 9. Verify CUDA Availability
+
+If PyTorch is installed, CUDA availability can be checked using:
+
+```bash
+python3 -c "import torch; print(torch.cuda.is_available())"
+```
+
+Expected output:
+
+```text
+False
+```
+
+The expected result is **False**, as the Broadcom VideoCore VI GPU does not provide CUDA support.
+
+
 
 ## System Verification
 
@@ -100,12 +294,6 @@ vcgencmd version
 ```
 <img width="466" height="93" alt="image" src="https://github.com/user-attachments/assets/8c3b36f6-b31c-4464-b968-3d9eff900ce3" />
 
-OpenGL Renderer:
-
-```bash
-glxinfo | grep "OpenGL renderer"
-```
-<img width="850" height="60" alt="image" src="https://github.com/user-attachments/assets/2644d520-efc8-4460-95ab-cb0d694eb795" />
 
 Memory Information:
 
@@ -114,143 +302,51 @@ free -h
 ```
 <img width="574" height="88" alt="image" src="https://github.com/user-attachments/assets/dbcba7ea-69f8-40b4-add4-de7b93e1f76f" />
 
----
-
-## Current GPU Status
-
-During system inspection:
-
-* GPU firmware detected successfully.
-* Raspberry Pi firmware initialized correctly.
-* No CUDA-capable GPU detected.
-* No GPU-accelerated PyTorch installation present.
 
 ---
 
-## Limitations
+# Verification Summary
 
-* CUDA is not supported.
-* TensorRT is unavailable.
-* GPU cannot accelerate PyTorch models.
-* GPU is optimized for graphics and multimedia processing.
-
----
-
-## Possible AI Acceleration Upgrades
-
-To improve AI performance, the following hardware accelerators may be considered:
-
-* Google Coral USB Accelerator (Edge TPU)
-* NVIDIA Jetson Nano
-* NVIDIA Jetson Orin Nano
-
-These platforms provide dedicated AI hardware capable of accelerating neural network inference.
-
-## Current GPU Status
-
-The GPU capabilities were evaluated using system inspection commands and software package verification.
-
-| Observation                       | Verification Method                                                                                                                                          | Status                                                  |                |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- | -------------- |
-| GPU firmware detected             | `vcgencmd version`                                                                                                                                           | Verified                                                |                |
-| Raspberry Pi firmware initialized | `vcgencmd version`                                                                                                                                           | Verified                                                |                |
-| GPU hardware present              | `lspci` is not applicable on Raspberry Pi; GPU is integrated into the Broadcom SoC and identified through Raspberry Pi firmware and hardware specifications. | Verified                                                |                |
-| CUDA support                      | `python3 -c "import torch; print(torch.cuda.is_available())"` (if PyTorch is installed)                                                                      | Not Supported                                           |                |
-| PyTorch GPU support               | `python3 -c "import torch"`                                                                                                                                  | PyTorch not installed                                   |                |
-| GPU renderer                      | `glxinfo                                                                                                                                                     | grep "OpenGL renderer"`*(after installing`mesa-utils`)* | To be Verified |
-| OpenGL version                    | `glxinfo                                                                                                                                                     | grep "OpenGL version"`                                  | To be Verified |
-| Vulkan support                    | `vulkaninfo` *(after installing `vulkan-tools`)*                                                                                                             | To be Verified                                          |                |
-
-### Verification Commands
-
-#### Check Raspberry Pi firmware
-
-```bash
-vcgencmd version
-```
-
-#### Check operating system and kernel
-
-```bash
-cat /etc/os-release
-uname -a
-```
-
-#### Check GPU memory allocation
-
-```bash
-vcgencmd get_mem gpu
-```
-
-#### Check ARM memory allocation
-
-```bash
-vcgencmd get_mem arm
-```
-
-#### Check OpenGL renderer
-
-Install Mesa utilities:
-
-```bash
-sudo apt install mesa-utils
-```
-
-Then run:
-
-```bash
-glxinfo | grep "OpenGL renderer"
-```
-
-#### Check OpenGL version
-
-```bash
-glxinfo | grep "OpenGL version"
-```
-
-#### Check Vulkan support
-
-Install:
-
-```bash
-sudo apt install vulkan-tools
-```
-
-Run:
-
-```bash
-vulkaninfo
-```
-
-#### Check whether PyTorch is installed
-
-```bash
-python3 -c "import torch; print(torch.__version__)"
-```
-
-#### Check CUDA availability (if PyTorch is installed)
-
-```bash
-python3 -c "import torch; print(torch.cuda.is_available())"
-```
-
-Expected output:
-
-```text
-False
-```
-
-This is expected because the Raspberry Pi 4 does not provide CUDA support.
+| Test                 | Command                     | Result        |
+| -------------------- | --------------------------- | ------------- |
+| Operating System     | `cat /etc/os-release`       | Passed        |
+| Kernel Version       | `uname -a`                  | Passed        |
+| GPU Firmware         | `vcgencmd version`          | Passed        |
+| GPU Memory           | `vcgencmd get_mem gpu`      | Passed        |
+| ARM Memory           | `vcgencmd get_mem arm`      | Passed        |
+| OpenGL Renderer      | `glxinfo`                   | Passed        |
+| OpenGL Version       | `glxinfo`                   | Passed        |
+| Vulkan Support       | `vulkaninfo`                | Not Available |
+| PyTorch Installation | `python3 -c "import torch"` | Not Installed |
+| CUDA Support         | `torch.cuda.is_available()` | Not Supported |
 
 ---
 
-## Limitations
+# Limitations
 
-The following limitations were identified during hardware and software inspection:
+The Raspberry Pi 4 graphics subsystem has the following limitations:
 
-| Limitation                                                       | Verification                                                                                                                            |                                        |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| CUDA is not supported                                            | `torch.cuda.is_available()` returns `False` (when PyTorch is installed), and Raspberry Pi 4's VideoCore VI GPU does not implement CUDA. |                                        |
-| TensorRT is unavailable                                          | `dpkg -l                                                                                                                                | grep tensorrt` (no packages installed) |
-| GPU cannot accelerate PyTorch models                             | No CUDA backend is available for the Raspberry Pi VideoCore VI GPU.                                                                     |                                        |
-| GPU is primarily intended for graphics and multimedia processing | Confirmed through Raspberry Pi hardware specifications and OpenGL capability inspection (`glxinfo`).                                    |                                        |
+* CUDA acceleration is not supported.
+* TensorRT cannot be used because no NVIDIA GPU is present.
+* PyTorch and TensorFlow execute on the CPU.
+* Vulkan support is unavailable in the current software configuration.
+* The VideoCore VI GPU is optimized for graphics rendering and multimedia processing rather than AI computation.
+
+---
+
+# Possible AI Acceleration Upgrades
+
+For applications requiring real-time AI inference, the following hardware accelerators may be considered:
+
+| Device                       | Purpose                               |
+| ---------------------------- | ------------------------------------- |
+| Google Coral USB Accelerator | Edge TPU inference acceleration       |
+| NVIDIA Jetson Nano           | Embedded CUDA platform                |
+| NVIDIA Jetson Orin Nano      | High-performance embedded AI platform |
+
+---
+
+# Conclusion
+
+The Raspberry Pi 4's Broadcom VideoCore VI GPU is suitable for graphics rendering, video processing, and multimedia applications. It does not support CUDA-based GPU computing and therefore cannot accelerate deep learning frameworks such as PyTorch or TensorFlow. Consequently, AI inference on the current TurboPi platform is performed by the ARM Cortex-A72 CPU unless an external AI accelerator is integrated.
+
