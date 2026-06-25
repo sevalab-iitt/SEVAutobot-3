@@ -1,7 +1,7 @@
 # TurboPi ROS2 Robotic Car Documentation
 ### Hiwonder TurboPi Raspberry Pi Robot Car ROS2 with Mecanum Wheels, AI Vision & Tracking, Multimodal Large AI Model ChatGPT / Gemini / Grok / Llama, and Voice Interaction
 <img width="1196" height="809" alt="image0" src="https://github.com/user-attachments/assets/2d7a6352-3fe6-4097-8b94-9b8537b70dd1" />
-
+*Image source: Official TurboPi website. © Respective owner. Used for documentation purposes.*
 ## Overview
 
 TurboPi is an open-source AI vision car designed for beginners, powered by the Raspberry Pi. It features a Mecanum-wheel chassis for omnidirectional movement, a 2-DOF HD wide-angle camera, and supports Python programming with OpenCV and YOLO26 for image processing and object detection. TurboPi enables a range of intelligent functions such as color recognition, object tracking, and autonomous driving. The TurboPi Advanced Kit is powered by the ROS2 operating system and integrates a Multimodal Large AI model. This allows it to perceive its environment, plan actions, and execute tasks with enhanced flexibility-enabling more advanced applications in embodied AI.
