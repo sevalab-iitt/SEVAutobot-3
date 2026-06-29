@@ -115,6 +115,8 @@ Expected output:
 ```
 Bus 001 Device 004: ID xxxx:xxxx icSpring camera
 ```
+<img width="327" height="166" alt="image" src="https://github.com/user-attachments/assets/99fd3357-1bc7-47d4-bc04-a959c5321cff" />
+
 
 List available video devices:
 
@@ -129,6 +131,7 @@ icspring camera
     /dev/video0
     /dev/video1
 ```
+<img width="245" height="273" alt="image" src="https://github.com/user-attachments/assets/24ff350d-4f19-4c84-ac61-d1a614c69925" />
 
 | Property          | Result         |
 |-------------------|----------------|
@@ -146,6 +149,7 @@ The TurboPi workspace includes a built-in camera interface module for quick veri
 cd ~/TurboPi
 python Camera.py
 ```
+<img width="516" height="425" alt="image" src="https://github.com/user-attachments/assets/78c5d179-88c7-4f8a-8848-43ff6c98c4b0" />
 
 A live preview window confirms that:
 
@@ -225,6 +229,7 @@ actual_fps = frame_count / elapsed
 print(f"Measured FPS: {actual_fps:.2f}")
 cap.release()
 ```
+<img width="330" height="29" alt="image" src="https://github.com/user-attachments/assets/74ad494d-0e7d-46af-ac00-f5447c6347d2" />
 
 ---
 
@@ -274,6 +279,13 @@ Execute:
 ```bash
 python3 capture_images.py
 ```
+<img width="232" height="47" alt="image" src="https://github.com/user-attachments/assets/fc4256ea-5c5e-48b8-b88a-9a07570e153b" />
+
+<img width="232" height="47" alt="image" src="https://github.com/user-attachments/assets/812a7ff5-bb7b-410e-b56b-e23bdf9f0c5c" />
+
+<img width="232" height="47" alt="image" src="https://github.com/user-attachments/assets/346799b8-1d1d-40e2-a1d4-994dbe2bd103" />
+
+<img width="232" height="47" alt="image" src="https://github.com/user-attachments/assets/c1b5cdde-a06f-409f-a83b-a208ae6161d0" />
 
 ### 5.2 Keyboard Controls
 
@@ -385,6 +397,7 @@ writer.release()
 cv2.destroyAllWindows()
 print(f"Saved: {output_path}")
 ```
+<img width="410" height="236" alt="image" src="https://github.com/user-attachments/assets/92e59712-f36a-4f2b-bbe4-ef0891fd4055" />
 
 ---
 
@@ -458,7 +471,7 @@ print(f"Metadata saved: {output_path}")
     }
 }
 ```
-
+Depends on what are the extra details you need you can add them on metadata, 
 ---
 
 ## 8. Telemetry and Runtime Profiling
