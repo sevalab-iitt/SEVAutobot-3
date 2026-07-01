@@ -1,759 +1,937 @@
-# Motion Control
+# Motion Control — TurboPi
 
-## Overview
-
-Motion Control is responsible for converting software commands into physical movement of the TurboPi robot.
-
-TurboPi uses:
-
-- Raspberry Pi 4B (8GB)
-- 4 × DC geared motors
-- 4 × Mecanum wheels
-- Pan-Tilt camera system
-- PWM servo controller
-- Hiwonder Expansion Board
-
-The objective of this section is to understand, test, benchmark, and document all movement capabilities of the robot.
+**Platform:** TurboPi — Raspberry Pi 4B (8 GB)  
+**Drive System:** 4 × Mecanum Wheels (Omnidirectional)  
+**Document Version:** 1.0
 
 ---
 
-# Motion Control Architecture
+## Table of Contents
 
-```text
-User Command
-      │
-      ▼
-Motion Planner
-      │
-      ▼
-Kinematics Layer
-      │
-      ▼
-Motor Controller
-      │
-      ▼
-PWM Generation
-      │
-      ▼
-Motor Driver Board
-      │
-      ▼
-Mecanum Wheels
-      │
-      ▼
-Robot Movement
+1. [Introduction](#1-introduction)
+2. [Hardware Components](#2-hardware-components)
+3. [Directory Structure](#3-directory-structure)
+4. [Pre-Flight Checks](#4-pre-flight-checks)
+5. [Mecanum Wheel Drive System](#5-mecanum-wheel-drive-system)
+6. [Kinematics Model](#6-kinematics-model)
+7. [SDK Deep Dive — HiwonderSDK](#7-sdk-deep-dive--hiwondersdk)
+8. [Motion Demonstrations](#8-motion-demonstrations)
+9. [Servo and Pan-Tilt Control](#9-servo-and-pan-tilt-control)
+10. [Vision-Based Motion](#10-vision-based-motion)
+11. [Performance Benchmarking](#11-performance-benchmarking)
+12. [Troubleshooting](#12-troubleshooting)
+13. [Verification Checklist](#13-verification-checklist)
+14. [Future Improvements](#14-future-improvements)
+
+---
+
+## 1. Introduction
+
+Motion Control is the subsystem responsible for converting software commands into physical robot movement. On the TurboPi, this means coordinating four independently driven Mecanum wheels for omnidirectional ground movement, plus a two-axis servo pan-tilt mechanism for camera positioning.
+
+What makes this interesting: unlike a conventional four-wheel differential drive where turning requires speed differences between left and right sides, Mecanum wheels can generate **lateral force** — the robot can slide sideways, move diagonally, or spin in place without changing its heading. This enables a much richer set of behaviors.
+
+### 1.1 Motion Control Architecture
+
+```
+User Command / Vision Input
+          │
+          ▼
+    Motion Planner
+          │
+          ▼
+   Kinematics Layer
+   (vx, vy, ω → wheel speeds)
+          │
+          ▼
+    Motor Controller
+    (mecanum.py / Board.py)
+          │
+          ▼
+    PWM Generation
+    (Hiwonder Expansion Board)
+          │
+          ▼
+  4 × DC Geared Motors
+          │
+          ▼
+  4 × Mecanum Wheels
+          │
+          ▼
+    Robot Movement
 ```
 
 ---
 
-# Directory Structure
+## 2. Hardware Components
 
-```text
-TurboPi/
-
-MecanumControl/
-
-Car_Forward_Demo.py
-Car_Move_Demo.py
-Car_Slant_Demo.py
-Car_Turn_Demo.py
-Car_Drifting_Demo.py
-
-HiwonderSDK/
-
-mecanum.py
-Board.py
-PID.py
-MotorControlDemo.py
-
-Functions/
-
-Avoidance.py
-LineFollower.py
-VisualPatrol.py
-ColorTracking.py
-FaceTracking.py
-```
+| Component              | Specification                          | Role                              |
+|------------------------|----------------------------------------|-----------------------------------|
+| Main Controller        | Raspberry Pi 4B — 8 GB                | Command processing                |
+| Drive Motors           | 4 × DC Geared Motors                  | Wheel actuation                   |
+| Wheels                 | 4 × Mecanum Wheels                    | Omnidirectional motion            |
+| Expansion Board        | Hiwonder Servo Expansion Board        | PWM generation, servo, I/O        |
+| Servo Motors           | 2 × PWM Servos                        | Pan-tilt camera mechanism         |
+| Control Library        | HiwonderSDK (`mecanum.py`, `Board.py`)| Software abstraction layer        |
+| Feedback Controller    | `PID.py`                              | Tracking stability                |
 
 ---
 
-# Motion Components
+## 3. Directory Structure
 
-| Component | Description |
-|-----------|-------------|
-| DC Motors | Wheel actuation |
-| Mecanum Wheels | Omnidirectional movement |
-| Board.py | Hardware interface |
-| mecanum.py | Wheel control |
-| PID.py | Feedback controller |
-| Servo Motors | Camera movement |
-| Expansion Board | PWM generation |
-
----
-
-# Experiment 1 — Forward Motion
-
-File
-
-```text
-MecanumControl/Car_Forward_Demo.py
+```
+~/TurboPi/
+├── MecanumControl/
+│   ├── Car_Forward_Demo.py       ← Forward movement
+│   ├── Car_Move_Demo.py          ← All directions combined
+│   ├── Car_Slant_Demo.py         ← Diagonal / slant motion
+│   ├── Car_Turn_Demo.py          ← Turning / rotation
+│   └── Car_Drifting_Demo.py      ← Drift motion
+│
+├── HiwonderSDK/
+│   ├── mecanum.py                ← Wheel velocity commands
+│   ├── Board.py                  ← Hardware interface (PWM, servo, LED, buzzer)
+│   ├── PID.py                    ← Feedback controller
+│   └── MotorControlDemo.py       ← Low-level motor test
+│
+└── Functions/
+    ├── ColorTracking.py          ← Vision-based color tracking
+    ├── FaceTracking.py           ← Vision-based face tracking
+    ├── LineFollower.py           ← Line following
+    ├── VisualPatrol.py           ← Visual patrol / path following
+    └── Avoidance.py              ← Ultrasonic obstacle avoidance
 ```
 
-Command
+Verify this structure on your system:
 
 ```bash
-python3 Car_Forward_Demo.py
-```
-
-Observe
-
-- Does the robot move forward?
-- Smoothness
-- Speed
-- Wheel synchronization
-- Vibrations
-
-Results
-
-```text
-Observation:
-_________________
-
-Distance:
-_________________
-
-Time:
-_________________
-
-Issues:
-_________________
-```
-
-Status
-
-```text
-[ ] Tested
-[ ] Working
-[ ] Needs Debugging
+cd ~/TurboPi
+tree -L 2 MecanumControl
+tree -L 2 HiwonderSDK
+tree -L 2 Functions
 ```
 
 ---
 
-# Experiment 2 — Turning
+## 4. Pre-Flight Checks
 
-File
+Run these every session before testing motion. A robot that drives unexpectedly into a wall because of a missed check is a bad experiment.
 
-```text
-Car_Turn_Demo.py
-```
-
-Run
+### 4.1 System Health
 
 ```bash
-python3 Car_Turn_Demo.py
-```
-
-Check
-
-- Rotation angle
-- Stability
-- Drift
-- Motor response
-
-Results
-
-```text
-___________________
-```
-
-Status
-
-```text
-[ ] Tested
-[ ] Working
-```
-
----
-
-# Experiment 3 — Slant Motion
-
-File
-
-```text
-Car_Slant_Demo.py
-```
-
-Run
-
-```bash
-python3 Car_Slant_Demo.py
-```
-
-Observe
-
-- Diagonal movement
-- Wheel coordination
-- Stability
-
-Results
-
-```text
-___________________
-```
-
-Status
-
-```text
-[ ] Tested
-```
-
----
-
-# Experiment 4 — Drift Motion
-
-File
-
-```text
-Car_Drifting_Demo.py
-```
-
-Run
-
-```bash
-python3 Car_Drifting_Demo.py
-```
-
-Observe
-
-- Controlled drift
-- Speed
-- Precision
-
-Results
-
-```text
-___________________
-```
-
----
-
-# Experiment 5 — Combined Motion
-
-File
-
-```text
-Car_Move_Demo.py
-```
-
-Run
-
-```bash
-python3 Car_Move_Demo.py
-```
-
-Observe
-
-```text
-Forward
-
-Backward
-
-Left
-
-Right
-
-Rotation
-
-Stop
-```
-
-Status
-
-```text
-[ ] Tested
-```
-
----
-
-# Mecanum Drive System
-
-TurboPi utilizes four mecanum wheels.
-
-Capabilities
-
-- Forward motion
-- Backward motion
-- Left translation
-- Right translation
-- Diagonal movement
-- Rotation
-- Omnidirectional navigation
-
-Advantages
-
-- High maneuverability
-- Smooth lateral movement
-- Compact turning radius
-
-Limitations
-
-- Increased slippage
-- Reduced traction
-- Sensitive to uneven surfaces
-
----
-
-# Kinematic Model
-
-Robot Motion Variables
-
-```text
-vx
-
-vy
-
-ω
-```
-
-where
-
-```text
-vx = forward velocity
-
-vy = lateral velocity
-
-ω = angular velocity
-```
-
-Pipeline
-
-```text
-Desired Motion
-
-↓
-
-Inverse Kinematics
-
-↓
-
-Wheel Velocities
-
-↓
-
-PWM
-
-↓
-
-Motors
-
-↓
-
-Robot Motion
-```
-
----
-
-# HiwonderSDK Investigation
-
-Files
-
-```text
-HiwonderSDK/
-
-Board.py
-
-mecanum.py
-
-PID.py
-```
-
----
-
-## Board.py
-
-Purpose
-
-```text
-Servo Control
-
-PWM
-
-RGB LEDs
-
-Buzzer
-
-Hardware Communication
-```
-
-Commands
-
-```python
-Board.setPWMServoPulse()
-
-Board.setBuzzer()
-
-Board.RGB.show()
-```
-
-Verification
-
-```bash
-nano Board.py
-```
-
-Status
-
-```text
-[ ] Studied
-```
-
----
-
-## mecanum.py
-
-Purpose
-
-```text
-Wheel Control
-
-Velocity Commands
-
-Motion Generation
-```
-
-Commands
-
-```python
-set_velocity()
-
-move()
-
-stop()
-```
-
-Verification
-
-```bash
-nano mecanum.py
-```
-
-Status
-
-```text
-[ ] Studied
-```
-
----
-
-## PID.py
-
-Purpose
-
-```text
-Feedback Controller
-
-Tracking
-
-Smooth Motion
-```
-
-Applications
-
-```text
-FaceTracking
-
-ColorTracking
-
-LineFollower
-```
-
-Verification
-
-```bash
-nano PID.py
-```
-
-Status
-
-```text
-[ ] Studied
-```
-
----
-
-# Servo Control
-
-Files
-
-```text
-Board.py
-```
-
-Commands
-
-```python
-Board.setPWMServoPulse(
-id,
-pulse,
-time
-)
-```
-
-Parameters
-
-| Parameter | Meaning |
-|-----------|---------|
-| ID | Servo Number |
-| Pulse | Position |
-| Time | Movement Duration |
-
-Example
-
-```python
-Board.setPWMServoPulse(
-1,
-1500,
-1000
-)
-```
-
-Tests
-
-```text
-Move Left
-
-Move Right
-
-Move Up
-
-Move Down
-```
-
-Status
-
-```text
-[ ] Tested
-```
-
----
-
-# Vision Based Motion
-
-Functions
-
-```text
-ColorTracking.py
-
-FaceTracking.py
-
-LineFollower.py
-
-VisualPatrol.py
-
-Avoidance.py
-```
-
-Pipeline
-
-```text
-Camera
-
-↓
-
-Detection
-
-↓
-
-Tracking
-
-↓
-
-PID
-
-↓
-
-Servo Motion
-
-↓
-
-Robot Motion
-```
-
----
-
-# Experiment 6 — Color Tracking
-
-File
-
-```text
-Functions/ColorTracking.py
-```
-
-Run
-
-```bash
-sudo python3 ColorTracking.py
-```
-
-Observe
-
-- Object following
-- Servo response
-- Delay
-- Stability
-
-Results
-
-```text
-___________________
-```
-
-Status
-
-```text
-[ ] Tested
-```
-
----
-
-# Experiment 7 — Face Tracking
-
-File
-
-```text
-Functions/FaceTracking.py
-```
-
-Run
-
-```bash
-sudo python3 FaceTracking.py
-```
-
-Observe
-
-- Detection speed
-- Tracking accuracy
-- Servo movement
-- FPS
-
-Results
-
-```text
-___________________
-```
-
----
-
-# Experiment 8 — Line Following
-
-File
-
-```text
-Functions/LineFollower.py
-```
-
-Observe
-
-- Path accuracy
-- Oscillations
-- Stability
-
-Status
-
-```text
-[ ] Tested
-```
-
----
-
-# Experiment 9 — Obstacle Avoidance
-
-File
-
-```text
-Functions/Avoidance.py
-```
-
-Observe
-
-```text
-Detection Distance
-
-Stopping Distance
-
-Reaction Time
-```
-
-Results
-
-```text
-___________________
-```
-
----
-
-# Benchmarking
-
-Measure
-
-```text
-CPU Usage
-
-RAM Usage
-
-Temperature
-
-Latency
-
-FPS
-
-Tracking Error
-
-Servo Delay
-```
-
-Commands
-
-```bash
+# Memory status
 free -h
 
-top
+# Storage — ensure enough space for logs
+df -h
 
-htop
-
+# CPU temperature — should be below 70°C before starting
 vcgencmd measure_temp
 
+# GPU memory allocation
 vcgencmd get_mem gpu
 ```
 
-Results
+### 4.2 Verify SDK Files Exist
 
-```text
-CPU:
+```bash
+ls ~/TurboPi/HiwonderSDK/
+ls ~/TurboPi/MecanumControl/
+ls ~/TurboPi/Functions/
+```
 
-RAM:
+### 4.3 Quick SDK Sanity Script
 
-TEMP:
+Create this script once to verify the SDK loads without errors:
 
-GPU:
+```bash
+nano ~/TurboPi/test_sdk.py
+```
 
-FPS:
+```python
+import sys
+sys.path.append('/home/pi/TurboPi')
+
+try:
+    from HiwonderSDK import Board
+    print("[OK] Board.py imported")
+except Exception as e:
+    print(f"[FAIL] Board.py: {e}")
+
+try:
+    from HiwonderSDK import mecanum
+    print("[OK] mecanum.py imported")
+except Exception as e:
+    print(f"[FAIL] mecanum.py: {e}")
+
+try:
+    from HiwonderSDK.PID import PID
+    print("[OK] PID.py imported")
+except Exception as e:
+    print(f"[FAIL] PID.py: {e}")
+
+print("\nSDK check complete.")
+```
+
+```bash
+sudo python3 ~/TurboPi/test_sdk.py
+```
+
+Expected output:
+
+```
+[OK] Board.py imported
+[OK] mecanum.py imported
+[OK] PID.py imported
+
+SDK check complete.
+```
+
+### 4.4 Workspace Clearance
+
+> **Before any motion test:** clear at least **1.5 metres** of open space in all directions. The drifting demo in particular can cover significant lateral distance unexpectedly.
+
+---
+
+## 5. Mecanum Wheel Drive System
+
+### 5.1 How Mecanum Wheels Work
+
+A standard wheel generates force only along its rolling direction. A Mecanum wheel has a series of **rubber rollers mounted at 45°** around its circumference. When the wheel spins, the net force on the ground is split into two components — one along the wheel axis and one perpendicular — the exact direction depending on wheel rotation speed and direction.
+
+```
+Wheel Layout — TurboPi Top View:
+
+    ╔══════════════════╗
+    ║  FL ╲       ╱ FR ║
+    ║      ╲     ╱     ║
+    ║                  ║
+    ║      ╱     ╲     ║
+    ║  RL ╱       ╲ RR ║
+    ╚══════════════════╝
+
+  FL = Front Left   (rollers: ╲ 45°)
+  FR = Front Right  (rollers: ╱ -45°)
+  RL = Rear Left    (rollers: ╱ -45°)
+  RR = Rear Right   (rollers: ╲ 45°)
+```
+
+### 5.2 Motion Primitives
+
+By independently controlling the direction and speed of each wheel, all of the following motions are possible:
+
+| Motion          | FL  | FR  | RL  | RR  | Description                         |
+|-----------------|-----|-----|-----|-----|-------------------------------------|
+| Forward         | ↑   | ↑   | ↑   | ↑   | All wheels forward                  |
+| Backward        | ↓   | ↓   | ↓   | ↓   | All wheels reverse                  |
+| Strafe Left     | ↓   | ↑   | ↑   | ↓   | Lateral translation left            |
+| Strafe Right    | ↑   | ↓   | ↓   | ↑   | Lateral translation right           |
+| Rotate CW       | ↑   | ↓   | ↑   | ↓   | Clockwise spin in place             |
+| Rotate CCW      | ↓   | ↑   | ↓   | ↑   | Counter-clockwise spin in place     |
+| Diagonal FL     | ●   | ↑   | ↑   | ●   | Front-left diagonal                 |
+| Diagonal FR     | ↑   | ●   | ●   | ↑   | Front-right diagonal                |
+| Drift           | mix | mix | mix | mix | Translation + rotation combined     |
+
+`●` = wheel freewheeling (zero torque), `↑` = forward, `↓` = reverse
+
+### 5.3 Advantages and Limitations
+
+| Aspect          | Detail                                                   |
+|-----------------|----------------------------------------------------------|
+| **Advantage**   | Omnidirectional — full lateral and rotational freedom    |
+| **Advantage**   | No turning radius — can spin in place                    |
+| **Advantage**   | Smooth lateral repositioning without heading change      |
+| **Limitation**  | Rollers slip on smooth or uneven surfaces                |
+| **Limitation**  | Less efficient than standard wheels on straight runs     |
+| **Limitation**  | Requires precise speed matching across all four wheels   |
+
+---
+
+## 6. Kinematics Model
+
+### 6.1 Robot Velocity Variables
+
+The robot's motion is described by three velocity components:
+
+| Variable | Meaning                          | Unit   |
+|----------|----------------------------------|--------|
+| `vx`     | Forward / backward velocity      | m/s    |
+| `vy`     | Lateral (strafe) velocity        | m/s    |
+| `ω`      | Angular (rotational) velocity    | rad/s  |
+
+### 6.2 Inverse Kinematics — Velocity to Wheel Speeds
+
+Given a desired `(vx, vy, ω)`, the required speed for each wheel is:
+
+```
+ω_FL = vx - vy - ω·(lx + ly)
+ω_FR = vx + vy + ω·(lx + ly)
+ω_RL = vx + vy - ω·(lx + ly)
+ω_RR = vx - vy + ω·(lx + ly)
+```
+
+Where `lx` and `ly` are the half-widths of the wheelbase (distance from robot centre to wheel centre along each axis).
+
+### 6.3 Pipeline Summary
+
+```
+Desired (vx, vy, ω)
+        │
+        ▼
+Inverse Kinematics
+        │
+        ▼
+ω_FL, ω_FR, ω_RL, ω_RR
+        │
+        ▼
+PWM values per motor
+        │
+        ▼
+Motors → Robot Motion
+```
+
+Inspect how this is implemented in practice:
+
+```bash
+nano ~/TurboPi/HiwonderSDK/mecanum.py
+```
+
+Look for the `set_velocity()` or `move()` function and trace how `vx`, `vy`, `ω` are converted to per-motor commands.
+
+---
+
+## 7. SDK Deep Dive — HiwonderSDK
+
+### 7.1 mecanum.py — Wheel Control
+
+```bash
+nano ~/TurboPi/HiwonderSDK/mecanum.py
+```
+
+Key functions to locate and understand:
+
+| Function         | Purpose                                         |
+|------------------|-------------------------------------------------|
+| `set_velocity()`  | Set individual wheel velocities                 |
+| `move()`          | Combined motion command (vx, vy, ω)             |
+| `stop()`          | Stop all motors                                 |
+
+Read through the file and note:
+- How velocities are normalized or clamped
+- Whether there is any ramp-up / ramp-down logic
+- How motor direction is encoded (sign convention)
+
+**Record your findings:**
+
+```
+set_velocity() signature:
+___________________________
+
+move() signature:
+___________________________
+
+Speed range (min/max):
+___________________________
+
+Notes:
+___________________________
 ```
 
 ---
 
-# Troubleshooting
+### 7.2 Board.py — Hardware Interface
 
-## Permission Error
-
-```text
-Can't open /dev/mem
-
-Permission denied
+```bash
+nano ~/TurboPi/HiwonderSDK/Board.py
 ```
 
-Solution
+`Board.py` is the low-level hardware abstraction. It controls:
+
+- **PWM servo outputs** — pan-tilt camera
+- **RGB LEDs** — status indicators
+- **Buzzer** — audio feedback
+- **I²C / UART communication** with the expansion board
+
+Key commands:
+
+```python
+# Move a servo
+Board.setPWMServoPulse(servo_id, pulse, duration_ms)
+
+# Control buzzer
+Board.setBuzzer(state)   # 1 = on, 0 = off
+
+# Set LED color
+Board.RGB.show()
+```
+
+**Read and record:**
+
+```
+Communication protocol (I2C / UART / SPI):
+___________________________
+
+Servo IDs available:
+___________________________
+
+Pulse range (min / center / max):
+___________________________
+
+Notes:
+___________________________
+```
+
+---
+
+### 7.3 PID.py — Feedback Controller
+
+```bash
+nano ~/TurboPi/HiwonderSDK/PID.py
+```
+
+PID (Proportional–Integral–Derivative) control is used in all tracking applications to reduce the error between a target position and the robot's current response.
+
+```
+Error = Target Position - Detected Position
+         │
+         ├── P: proportional correction
+         ├── I: accumulated error correction
+         └── D: rate-of-change correction
+                    │
+                    ▼
+              Servo / Motor Command
+```
+
+**Parameters to record:**
+
+```
+P (Kp):  ___________
+I (Ki):  ___________
+D (Kd):  ___________
+
+Used in:
+[ ] FaceTracking.py
+[ ] ColorTracking.py
+[ ] LineFollower.py
+```
+
+> **Tip:** If tracking oscillates (servo jitters left-right around target), `Kp` is too high. If tracking is sluggish, `Kp` is too low. `Kd` damps the oscillation.
+
+---
+
+## 8. Motion Demonstrations
+
+> **Before each experiment:** clear the workspace, confirm battery charge, and run the pre-flight check (§4).
+
+Navigate to the demo directory:
+
+```bash
+cd ~/TurboPi/MecanumControl
+```
+
+---
+
+### Experiment 1 — Forward Motion
+
+**File:** `Car_Forward_Demo.py`
+
+```bash
+sudo python3 Car_Forward_Demo.py
+```
+
+**Observe:**
+- Does the robot move in a straight line?
+- Is there any yaw drift (veering left or right)?
+- How smooth is the motion?
+- Estimate distance traveled and duration
+
+**Results:**
+
+```
+Motion direction:       ___________________________
+Straight line held:     [ ] Yes  [ ] No
+Observed yaw drift:     ___________________________
+Estimated distance:     ___________________________
+Estimated duration:     ___________________________
+Smoothness (1–5):       ___________________________
+Issues:                 ___________________________
+```
+
+**Status:** `[ ] Tested  [ ] Working  [ ] Needs Debugging`
+
+---
+
+### Experiment 2 — Turning / Rotation
+
+**File:** `Car_Turn_Demo.py`
+
+```bash
+sudo python3 Car_Turn_Demo.py
+```
+
+**Observe:**
+- Does the robot rotate cleanly in place, or does it translate while turning?
+- Estimate the rotation angle
+- Is the turn symmetric (CW vs CCW)?
+
+**Results:**
+
+```
+Rotation type:          [ ] In-place  [ ] Arc
+Estimated angle (°):    ___________________________
+CW stable:              [ ] Yes  [ ] No
+CCW stable:             [ ] Yes  [ ] No
+Drift observed:         ___________________________
+Issues:                 ___________________________
+```
+
+**Status:** `[ ] Tested  [ ] Working  [ ] Needs Debugging`
+
+---
+
+### Experiment 3 — Slant / Diagonal Motion
+
+**File:** `Car_Slant_Demo.py`
+
+```bash
+sudo python3 Car_Slant_Demo.py
+```
+
+This is where Mecanum drive shows its strength — lateral and diagonal movement without heading change.
+
+**Observe:**
+- Does the robot move diagonally without rotating?
+- Which diagonal direction (FL, FR, RL, RR)?
+- Wheel coordination — any wheel stalling?
+
+**Results:**
+
+```
+Diagonal direction:     ___________________________
+Heading change:         [ ] None  [ ] Slight  [ ] Significant
+Wheel stall observed:   [ ] Yes  [ ] No
+Stability (1–5):        ___________________________
+Issues:                 ___________________________
+```
+
+**Status:** `[ ] Tested  [ ] Working  [ ] Needs Debugging`
+
+---
+
+### Experiment 4 — Drift Motion
+
+**File:** `Car_Drifting_Demo.py`
+
+```bash
+sudo python3 Car_Drifting_Demo.py
+```
+
+> **Caution:** Clear at least 2 metres of space. The drift demo combines translation and rotation simultaneously and can cover significant area quickly.
+
+**Observe:**
+- Simultaneous lateral movement and rotation
+- Speed and arc characteristics
+- Surface grip behavior
+
+**Results:**
+
+```
+Arc radius (approx):    ___________________________
+Duration of drift:      ___________________________
+Surface behavior:       ___________________________
+Control observed:       [ ] Controlled  [ ] Erratic
+Issues:                 ___________________________
+```
+
+**Status:** `[ ] Tested  [ ] Working  [ ] Needs Debugging`
+
+---
+
+### Experiment 5 — Combined Motion (All Directions)
+
+**File:** `Car_Move_Demo.py`
+
+```bash
+sudo python3 Car_Move_Demo.py
+```
+
+This script sequences multiple motion primitives. It is the most comprehensive single test.
+
+**Directions to verify:**
+
+```
+[ ] Forward
+[ ] Backward
+[ ] Strafe Left
+[ ] Strafe Right
+[ ] Rotate CW
+[ ] Rotate CCW
+[ ] Diagonal
+[ ] Stop
+```
+
+**Results:**
+
+```
+All directions executed:    [ ] Yes  [ ] Partial  [ ] No
+Weakest motion type:        ___________________________
+Strongest motion type:      ___________________________
+Overall assessment:         ___________________________
+Issues:                     ___________________________
+```
+
+**Status:** `[ ] Tested  [ ] Working  [ ] Needs Debugging`
+
+---
+
+## 9. Servo and Pan-Tilt Control
+
+### 9.1 Pan-Tilt Mechanism
+
+The TurboPi camera is mounted on a two-axis servo pan-tilt bracket:
+
+| Axis  | Servo ID | Motion        | Range         |
+|-------|----------|---------------|---------------|
+| Pan   | 1        | Left ↔ Right  | ~500 – 2500 µs |
+| Tilt  | 2        | Up ↕ Down     | ~500 – 2500 µs |
+
+Center position (neutral):
+
+```python
+pulse = 1500   # microseconds — camera faces straight ahead
+```
+
+### 9.2 Servo Command Syntax
+
+```python
+from HiwonderSDK import Board
+
+Board.setPWMServoPulse(
+    servo_id,     # 1 = pan, 2 = tilt
+    pulse,        # position in microseconds (500–2500)
+    duration_ms   # time to reach position in ms
+)
+```
+
+### 9.3 Servo Test Script
+
+Create and run this to test each servo axis:
+
+```bash
+nano ~/TurboPi/test_servo.py
+```
+
+```python
+import sys
+import time
+sys.path.append('/home/pi/TurboPi')
+from HiwonderSDK import Board
+
+print("Testing Pan (Servo 1)...")
+Board.setPWMServoPulse(1, 1500, 500)   # Center
+time.sleep(1)
+Board.setPWMServoPulse(1, 1000, 800)   # Left
+time.sleep(1)
+Board.setPWMServoPulse(1, 2000, 800)   # Right
+time.sleep(1)
+Board.setPWMServoPulse(1, 1500, 500)   # Back to center
+time.sleep(1)
+
+print("Testing Tilt (Servo 2)...")
+Board.setPWMServoPulse(2, 1500, 500)   # Center
+time.sleep(1)
+Board.setPWMServoPulse(2, 1000, 800)   # Down
+time.sleep(1)
+Board.setPWMServoPulse(2, 2000, 800)   # Up
+time.sleep(1)
+Board.setPWMServoPulse(2, 1500, 500)   # Back to center
+
+print("Servo test complete.")
+```
+
+```bash
+sudo python3 ~/TurboPi/test_servo.py
+```
+
+**Results:**
+
+```
+Pan servo moves:        [ ] Yes  [ ] No
+Tilt servo moves:       [ ] Yes  [ ] No
+Full range reached:     [ ] Yes  [ ] Partial
+Jitter observed:        [ ] Yes  [ ] No
+Notes:                  ___________________________
+```
+
+---
+
+## 10. Vision-Based Motion
+
+Vision-based motion closes the perception-action loop: the camera detects a target, a PID controller computes the error, and servo/motor commands correct the robot's position.
+
+### 10.1 Pipeline Overview
+
+```
+Camera Frame
+     │
+     ▼
+Detection (Color / Face / Line / Proximity)
+     │
+     ▼
+Target Coordinates (x, y in frame)
+     │
+     ▼
+Error Calculation
+(target_x - frame_center_x, target_y - frame_center_y)
+     │
+     ▼
+PID Controller
+     │
+     ├── Pan servo command
+     └── Tilt servo command (+ wheel commands for line/avoidance)
+```
+
+---
+
+### Experiment 6 — Color Tracking
+
+**File:** `Functions/ColorTracking.py`
+
+```bash
+cd ~/TurboPi
+sudo python3 Functions/ColorTracking.py
+```
+
+**What to test:**
+- Hold a colored object in front of the camera
+- Move it left, right, up, down — observe servo response
+- Move it closer and further — observe stability
+
+**Observe:**
+
+```
+Color tracked:              ___________________________
+Servo follows target:       [ ] Yes  [ ] Partial  [ ] No
+Response lag (approx ms):   ___________________________
+Oscillation observed:       [ ] Yes  [ ] No
+Stable tracking distance:   ___________________________
+FPS during tracking:        ___________________________
+Issues:                     ___________________________
+```
+
+**Status:** `[ ] Tested  [ ] Working  [ ] Needs Debugging`
+
+---
+
+### Experiment 7 — Face Tracking
+
+**File:** `Functions/FaceTracking.py`
+
+```bash
+sudo python3 Functions/FaceTracking.py
+```
+
+**What to test:**
+- Position your face in front of the camera
+- Move slowly left, right, up, down
+- Move toward and away from the camera
+
+**Observe:**
+
+```
+Face detected immediately:  [ ] Yes  [ ] No
+Servo follows face:         [ ] Yes  [ ] Partial  [ ] No
+Max tracking range (cm):    ___________________________
+Detection FPS (approx):     ___________________________
+Loses lock when:            ___________________________
+Issues:                     ___________________________
+```
+
+**Status:** `[ ] Tested  [ ] Working  [ ] Needs Debugging`
+
+---
+
+### Experiment 8 — Line Following
+
+**File:** `Functions/LineFollower.py`
+
+```bash
+sudo python3 Functions/LineFollower.py
+```
+
+> **Requires:** A line drawn or taped on the floor (black tape on light surface recommended).
+
+**Observe:**
+
+```
+Line detected:              [ ] Yes  [ ] No
+Robot follows line:         [ ] Yes  [ ] Partial  [ ] No
+Oscillation (weaving):      [ ] None  [ ] Slight  [ ] Severe
+Line type used:             ___________________________
+Surface color:              ___________________________
+Issues:                     ___________________________
+```
+
+**Status:** `[ ] Tested  [ ] Working  [ ] Needs Debugging`
+
+---
+
+### Experiment 9 — Obstacle Avoidance
+
+**File:** `Functions/Avoidance.py`
+
+```bash
+sudo python3 Functions/Avoidance.py
+```
+
+**What to test:**
+- Place an object in the robot's path at varying distances
+- Observe detection distance and stopping/avoidance behavior
+
+**Observe:**
+
+```
+Detection distance (cm):    ___________________________
+Stops before obstacle:      [ ] Yes  [ ] No
+Avoidance direction:        [ ] Left  [ ] Right  [ ] Reverse
+Reaction time (approx ms):  ___________________________
+False positives observed:   [ ] Yes  [ ] No
+Issues:                     ___________________________
+```
+
+**Status:** `[ ] Tested  [ ] Working  [ ] Needs Debugging`
+
+---
+
+## 11. Performance Benchmarking
+
+### 11.1 Live System Monitor
+
+```bash
+# CPU, RAM, processes — interactive
+htop
+
+# Temperature
+vcgencmd measure_temp
+
+# GPU memory allocation
+vcgencmd get_mem gpu
+```
+
+### 11.2 Benchmarking Script
+
+Save this script and run it during any experiment to capture system state:
+
+```bash
+nano ~/TurboPi/benchmark.py
+```
+
+```python
+import psutil
+import subprocess
+import time
+import csv
+import os
+from datetime import datetime
+
+LOG_DIR = os.path.expanduser("~/TurboPi/logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+log_path = os.path.join(LOG_DIR, f"benchmark_{timestamp}.csv")
+
+def get_temperature():
+    try:
+        result = subprocess.run(
+            ["vcgencmd", "measure_temp"],
+            capture_output=True, text=True
+        )
+        return float(result.stdout.strip().replace("temp=", "").replace("'C", ""))
+    except Exception:
+        return -1.0
+
+def get_gpu_mem():
+    try:
+        result = subprocess.run(
+            ["vcgencmd", "get_mem", "gpu"],
+            capture_output=True, text=True
+        )
+        return result.stdout.strip()
+    except Exception:
+        return "N/A"
+
+fields = ["timestamp", "cpu_pct", "ram_pct", "ram_used_gb", "temp_c", "gpu_mem", "process_count"]
+
+print(f"Logging to: {log_path}")
+print("Press CTRL+C to stop.\n")
+print(f"{'Time':<12} {'CPU%':<8} {'RAM%':<8} {'RAM Used':<12} {'Temp°C':<10} {'GPU Mem':<10} {'Procs'}")
+print("-" * 70)
+
+with open(log_path, 'w', newline='') as f:
+    writer = csv.DictWriter(f, fieldnames=fields)
+    writer.writeheader()
+
+    try:
+        while True:
+            mem = psutil.virtual_memory()
+            row = {
+                "timestamp":    datetime.now().strftime("%H:%M:%S"),
+                "cpu_pct":      psutil.cpu_percent(interval=1),
+                "ram_pct":      mem.percent,
+                "ram_used_gb":  round(mem.used / 1e9, 2),
+                "temp_c":       get_temperature(),
+                "gpu_mem":      get_gpu_mem(),
+                "process_count":len(psutil.pids()),
+            }
+            writer.writerow(row)
+            f.flush()
+            print(f"{row['timestamp']:<12} {row['cpu_pct']:<8} {row['ram_pct']:<8} "
+                  f"{row['ram_used_gb']:<12} {row['temp_c']:<10} {row['gpu_mem']:<10} {row['process_count']}")
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        print(f"\nBenchmark saved: {log_path}")
+```
+
+Run in one terminal while running a motion demo in another:
+
+```bash
+# Terminal 1 — start logger
+sudo python3 ~/TurboPi/benchmark.py
+
+# Terminal 2 — run experiment
+sudo python3 ~/TurboPi/Functions/FaceTracking.py
+```
+
+### 11.3 Results Table
+
+Fill this in after benchmarking each experiment:
+
+| Experiment           | CPU %  | RAM %  | Temp (°C) | FPS (approx) | Notes |
+|----------------------|--------|--------|-----------|--------------|-------|
+| Forward Demo         |        |        |           | N/A          |       |
+| Turn Demo            |        |        |           | N/A          |       |
+| Color Tracking       |        |        |           |              |       |
+| Face Tracking        |        |        |           |              |       |
+| Line Following       |        |        |           |              |       |
+| Obstacle Avoidance   |        |        |           |              |       |
+
+---
+
+## 12. Troubleshooting
+
+### 12.1 Permission Denied
+
+**Symptom:**
+
+```
+PermissionError: [Errno 13] Permission denied: '/dev/mem'
+```
+
+**Cause:** Hardware access (GPIO, I²C, PWM) requires elevated privileges.
+
+**Fix:**
 
 ```bash
 sudo python3 script.py
@@ -761,184 +939,174 @@ sudo python3 script.py
 
 ---
 
-## Servo Not Moving
+### 12.2 Servo Not Moving
 
-Check
+**Diagnosis steps:**
 
-```python
-Board.setPWMServoPulse()
+```bash
+# 1. Confirm Board.py imports without error
+sudo python3 -c "from HiwonderSDK import Board; print('OK')"
+
+# 2. Run servo test script
+sudo python3 ~/TurboPi/test_servo.py
 ```
+
+**Common causes:**
+
+| Cause                          | Fix                                          |
+|--------------------------------|----------------------------------------------|
+| Wrong servo ID                 | Check which ID maps to pan vs tilt           |
+| Pulse value out of range       | Use 500–2500 µs range; center = 1500         |
+| Power not reaching servo board | Check expansion board power LED              |
+| `Board.py` import failed       | Confirm `HiwonderSDK/` path is correct       |
 
 ---
 
-## Wheels Not Moving
+### 12.3 Wheels Not Moving
 
-Inspect
+**Diagnosis:**
 
-```text
-Board.py
+```bash
+# 1. Check mecanum.py loads
+sudo python3 -c "from HiwonderSDK import mecanum; print('OK')"
 
-mecanum.py
-
-Power Supply
+# 2. Run low-level motor demo
+cd ~/TurboPi/HiwonderSDK
+sudo python3 MotorControlDemo.py
 ```
+
+**Common causes:**
+
+| Cause                         | Fix                                          |
+|-------------------------------|----------------------------------------------|
+| Battery low                   | Charge battery, verify voltage               |
+| Motor cable disconnected      | Inspect physical connections                 |
+| `mecanum.py` import error     | Check SDK path                               |
+| Wrong working directory       | `cd ~/TurboPi` before running scripts        |
 
 ---
 
-## Tracking Not Working
+### 12.4 Vision Tracking Not Working
 
-Check
+**Diagnosis:**
 
-```text
-Camera
+```bash
+# Camera detected?
+v4l2-ctl --list-devices
 
-LAB thresholds
-
-PID values
-
-Permissions
+# OpenCV can open camera?
+sudo python3 -c "import cv2; cap = cv2.VideoCapture(0); print('Opened:', cap.isOpened())"
 ```
+
+**Common causes:**
+
+| Symptom                          | Likely Cause              | Fix                                      |
+|----------------------------------|---------------------------|------------------------------------------|
+| Camera not detected              | USB disconnected          | Reconnect USB, re-run `v4l2-ctl`         |
+| Tracking does not follow target  | LAB color thresholds off  | Recalibrate color range in script        |
+| Servo jitters around target      | Kp too high in PID        | Reduce `Kp` in `PID.py`                 |
+| Tracking lags significantly      | CPU overloaded            | Stop background services (see §12.5)    |
 
 ---
 
-# Future Improvements
+### 12.5 Reducing CPU Load Before Experiments
 
-Planned Features
+Stop non-essential services to free resources:
 
-```text
-ROS2 Integration
-
-Odometry
-
-SLAM
-
-Navigation Stack
-
-YOLO
-
-ByteTrack
-
-DeepSORT
-
-Visual Servoing
-
-Autonomous Navigation
+```bash
+sudo systemctl stop lightdm
+sudo systemctl stop cups
+sudo systemctl stop bluetooth
+sudo systemctl stop avahi-daemon
+sudo systemctl stop vncserver-x11-serviced
+pkill chromium
 ```
 
-Status
-
-```text
-[ ] Planned
-
-[ ] In Progress
-
-[ ] Completed
-```
+> These do not persist across reboots. Restart with `sudo systemctl start <service>` when done.
 
 ---
 
-# Verification Checklist
+## 13. Verification Checklist
 
-Basic Motion
+Use this as a sign-off checklist after completing all experiments.
 
-```text
+### Basic Motion
+
+```
 [ ] Forward
-
 [ ] Backward
-
-[ ] Left
-
-[ ] Right
-
-[ ] Rotate
-
+[ ] Strafe Left
+[ ] Strafe Right
+[ ] Rotate CW
+[ ] Rotate CCW
+[ ] Diagonal
 [ ] Drift
-
-[ ] Slant
+[ ] Combined (Car_Move_Demo)
 ```
 
-Servo
+### Servo / Pan-Tilt
 
-```text
-[ ] Pan
-
-[ ] Tilt
-
-[ ] Speed Control
+```
+[ ] Pan servo — full range tested
+[ ] Tilt servo — full range tested
+[ ] Center position verified
+[ ] Speed control (duration parameter)
 ```
 
-Tracking
+### Vision-Based Tracking
 
-```text
+```
 [ ] Color Tracking
-
 [ ] Face Tracking
-
-[ ] Visual Patrol
-
-[ ] Avoidance
-
 [ ] Line Following
+[ ] Obstacle Avoidance
+[ ] Visual Patrol
 ```
 
-Performance
+### SDK Study
 
-```text
-[ ] CPU Benchmarked
-
-[ ] RAM Benchmarked
-
-[ ] FPS Measured
-
-[ ] Temperature Logged
-
-[ ] Metadata Generated
+```
+[ ] mecanum.py — read and documented
+[ ] Board.py — read and documented
+[ ] PID.py — parameters recorded
 ```
 
-Documentation
+### Performance
 
-```text
-[ ] Images Added
+```
+[ ] CPU benchmarked during tracking
+[ ] RAM benchmarked during tracking
+[ ] Temperature logged
+[ ] FPS measured for vision demos
+[ ] Benchmark CSV saved
+```
 
-[ ] Videos Recorded
+### Documentation
 
-[ ] Screenshots Added
-
-[ ] Results Documented
-
-[ ] Issues Recorded
+```
+[ ] All experiment results filled in
+[ ] Issues recorded
+[ ] Photos / videos taken
+[ ] Benchmark logs saved to Dataset/logs/
 ```
 
 ---
 
-# Summary
+## 14. Future Improvements
 
-Motion Control is the subsystem responsible for translating perception and user commands into physical movement.
+| Area                        | Description                                                                 | Status      |
+|-----------------------------|-----------------------------------------------------------------------------|-------------|
+| **ROS2 Integration**        | Publish wheel odometry and servo state as ROS2 topics                       | `[ ] Planned` |
+| **Wheel Odometry**          | Add encoders for dead-reckoning position estimation                         | `[ ] Planned` |
+| **SLAM**                    | Simultaneous Localisation and Mapping using LiDAR or depth camera           | `[ ] Planned` |
+| **Navigation Stack**        | ROS2 Nav2 integration for autonomous waypoint navigation                    | `[ ] Planned` |
+| **YOLO Object Tracking**    | Replace simple color detection with YOLO-based object detection             | `[ ] Planned` |
+| **ByteTrack / DeepSORT**    | Multi-object tracking with persistent IDs across frames                     | `[ ] Planned` |
+| **Visual Servoing**         | Direct image-based servo control without explicit 3D pose estimation        | `[ ] Planned` |
+| **MPC / Pure Pursuit**      | Model Predictive Control or Pure Pursuit for smooth path following          | `[ ] Planned` |
+| **AI Accelerator**          | Google Coral TPU or Jetson Orin for on-device inference acceleration        | `[ ] Planned` |
+| **Autonomous Navigation**   | Full autonomy: perception → planning → execution loop                       | `[ ] Planned` |
 
-Current status:
+---
 
-```text
-Motion Demonstrations:
-
-□ Not Started
-□ Partial
-□ Complete
-
-Servo Control:
-
-□ Not Started
-□ Partial
-□ Complete
-
-Vision-Based Motion:
-
-□ Not Started
-□ Partial
-□ Complete
-
-Benchmarking:
-
-□ Not Started
-□ Partial
-□ Complete
-```
+*Motion control is the most tactile part of robotics — when the wheels spin correctly and the camera tracks a face across the room for the first time, the abstraction collapses into something real. Document everything, even the failures. The failure log is often more useful than the success log.*
