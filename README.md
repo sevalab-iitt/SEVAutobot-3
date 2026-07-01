@@ -71,7 +71,7 @@ The TurboPi Advanced Kit brings ROS2 and multimodal AI together — enabling the
 
 ---
 
-## System Architecture
+## [System Architecture](https://github.com/sevalab-iitt/SEVAutobot-3/blob/main/System%20Architecture.md)
 
 ```
 USB Camera (UVC)
