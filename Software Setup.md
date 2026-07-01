@@ -1,23 +1,43 @@
 # Software Setup
-<img width="663" height="322" alt="Screenshot 2026-06-24 122349" src="https://github.com/user-attachments/assets/e0c4a8ee-53a1-432a-9f80-bdbaf85c3dee" />
+### TurboPi Autonomous Robot Platform
+
+> Operating system, runtime environment, and configuration reference for the TurboPi software stack running on the Raspberry Pi 4B.
+
+<img width="663" height="322" alt="System overview" src="https://github.com/user-attachments/assets/e0c4a8ee-53a1-432a-9f80-bdbaf85c3dee" />
+
+---
+
+## Table of Contents
+
+- [Operating System](#operating-system)
+- [Python Environment](#python-environment)
+- [OpenCV](#opencv)
+- [TurboPi Software Directory](#turbopi-software-directory)
+- [Camera Configuration](#camera-configuration)
+- [Network Configuration](#network-configuration)
+- [Storage Configuration](#storage-configuration)
+- [ROS Status](#ros-status)
+- [Recommended Development Tools](#recommended-development-tools)
+- [Extras](#extras-not-mandatory-but-good-to-use)
+
+---
 
 ## Operating System
 
-The TurboPi platform is configured with:
+| Component | Version |
+|---|---|
+| OS | Debian GNU/Linux 11 (Bullseye) |
+| Kernel | Linux 6.1.21-v8+ |
+| Architecture | ARM64 (aarch64) |
 
-| Component    | Version                        |
-| ------------ | ------------------------------ |
-| OS           | Debian GNU/Linux 11 (Bullseye) |
-| Kernel       | Linux 6.1.21-v8+               |
-| Architecture | ARM64 (aarch64)                |
-
-Verification:
+**Verify:**
 
 ```bash
 cat /etc/os-release
 uname -a
 ```
-<img width="463" height="209" alt="image" src="https://github.com/user-attachments/assets/44ae8f98-9f7b-415d-9ebe-981bd255090e" />
+
+<img width="463" height="209" alt="OS and kernel version output" src="https://github.com/user-attachments/assets/44ae8f98-9f7b-415d-9ebe-981bd255090e" />
 
 ---
 
@@ -25,31 +45,33 @@ uname -a
 
 The TurboPi software stack is primarily Python-based.
 
-Verify Python installation:
+**Verify:**
 
 ```bash
 python3 --version
 ```
 
-Example output:
+Expected output:
 
 ```text
 Python 3.9.x
 ```
-<img width="268" height="33" alt="image" src="https://github.com/user-attachments/assets/07db1955-8d5f-4518-a4e7-bc5ecf310a31" />
+
+<img width="268" height="33" alt="Python version output" src="https://github.com/user-attachments/assets/07db1955-8d5f-4518-a4e7-bc5ecf310a31" />
 
 ---
 
 ## OpenCV
 
-OpenCV is used for image acquisition and computer vision functions.
+OpenCV handles image acquisition and computer vision (line following, object/color detection).
 
-Verify installation:
+**Verify:**
 
 ```bash
 python3 -c "import cv2; print(cv2.__version__)"
 ```
-<img width="470" height="32" alt="image" src="https://github.com/user-attachments/assets/76440367-2b28-4d74-8982-7916f7b4fd8f" />
+
+<img width="470" height="32" alt="OpenCV version output" src="https://github.com/user-attachments/assets/76440367-2b28-4d74-8982-7916f7b4fd8f" />
 
 ---
 
@@ -57,12 +79,10 @@ python3 -c "import cv2; print(cv2.__version__)"
 
 Main project location:
 
-```text
+```bash
 cd /home/pi/TurboPi
-~/TurboPi $ tree
+tree
 ```
-
-Project structure:
 
 ```text
 TurboPi/
@@ -77,45 +97,46 @@ TurboPi/
 ├── servo_config.yaml
 └── lab_config.yaml
 ```
-<img width="200" height="469" alt="image" src="https://github.com/user-attachments/assets/b190f005-5e14-4cd9-a34d-194cde5bea42" />
 
-<img width="230" height="463" alt="image" src="https://github.com/user-attachments/assets/1551d344-4cff-4762-95f7-5183868be5fb" />
+| Path | Purpose |
+|---|---|
+| `Camera.py` | Camera capture and streaming entry point |
+| `CameraCalibration/` | Intrinsic/extrinsic calibration data and scripts |
+| `Functions/` | Line-following, color detection, and other vision routines |
+| `HiwonderSDK/` | Vendor SDK for motor, servo, and sensor control |
+| `MecanumControl/` | Omnidirectional (mecanum) drive kinematics |
+| `TurboPi.py` | Main robot control entry point |
+| `RPCServer.py` | Remote procedure call server for external/remote commands |
+| `MjpgServer.py` | MJPEG video streaming server for the camera feed |
+| `servo_config.yaml` | Servo channel and calibration configuration |
+| `lab_config.yaml` | Color-space (LAB) thresholds for vision-based detection |
 
-<img width="219" height="130" alt="image" src="https://github.com/user-attachments/assets/b9608671-f94b-48fa-b868-329710a02e16" />
-
-
+<img width="200" height="469" alt="TurboPi directory listing (1 of 2)" src="https://github.com/user-attachments/assets/b190f005-5e14-4cd9-a34d-194cde5bea42" />
+<img width="230" height="463" alt="TurboPi directory listing (2 of 2)" src="https://github.com/user-attachments/assets/1551d344-4cff-4762-95f7-5183868be5fb" />
+<img width="219" height="130" alt="TurboPi directory tree summary" src="https://github.com/user-attachments/assets/b9608671-f94b-48fa-b868-329710a02e16" />
 
 ---
 
 ## Camera Configuration
 
-Camera type:
+| Property | Value |
+|---|---|
+| Camera type | USB camera (iCSpring) |
+| Detected device | `/dev/video0` |
 
-```text
-USB Camera (icspring camera)
-```
-
-Detected device:
-
-```text
-/dev/video0
-```
-
-Verification:
+**Verify:**
 
 ```bash
 v4l2-ctl --list-devices
 ```
-<img width="407" height="423" alt="image" src="https://github.com/user-attachments/assets/87690037-74d0-47c4-898e-304e8c9072cf" />
 
+<img width="407" height="423" alt="Camera device listing" src="https://github.com/user-attachments/assets/87690037-74d0-47c4-898e-304e8c9072cf" />
 
 ---
 
 ## Network Configuration
 
-Remote access is enabled using SSH.
-
-Connect from a remote computer:
+Remote access is provided over SSH.
 
 ```bash
 ssh pi@<robot-ip-address>
@@ -126,13 +147,16 @@ Example:
 ```bash
 ssh pi@192.168.0.102
 ```
-<img width="680" height="233" alt="image" src="https://github.com/user-attachments/assets/dfad44a4-0b50-4aab-9063-643a4a397e53" />
+
+<img width="680" height="233" alt="SSH connection example" src="https://github.com/user-attachments/assets/dfad44a4-0b50-4aab-9063-643a4a397e53" />
+
+> Find the robot's IP address on the same network with `hostname -I` (run on the Pi) or by checking your router's connected-devices list.
 
 ---
 
 ## Storage Configuration
 
-External USB storage can be mounted for dataset collection.
+External USB storage can be mounted for dataset collection during vision/ML data gathering.
 
 Example mount location:
 
@@ -140,7 +164,7 @@ Example mount location:
 /media/pi/SEVA (SHBM)
 ```
 
-Recommended dataset structure:
+Recommended dataset layout:
 
 ```text
 dataset/
@@ -152,59 +176,64 @@ dataset/
 
 ## ROS Status
 
-ROS is not currently installed on the system.
+ROS is **not currently installed** on the system.
 
-Verification:
+**Verify:**
 
 ```bash
 ros2 topic list
 rostopic list
 ```
 
-Output:
+Current output:
 
 ```text
 command not found
 ```
 
-Future integration may include ROS 2 Humble for advanced robotics applications.
+Future integration may include **ROS 2 Humble** for advanced robotics applications (navigation stack, standardized topic/service architecture, simulation via Gazebo/RViz).
 
 ---
 
 ## Recommended Development Tools
 
-* Python 3
-* OpenCV
-* SSH
-* Git
-* VS Code (Remote SSH)
-* V4L2 Utilities
-  
-## Extras (Not mandatory but good to use)
+| Tool | Purpose |
+|---|---|
+| Python 3 | Primary language for the TurboPi codebase |
+| OpenCV | Computer vision and image processing |
+| SSH | Remote shell access to the robot |
+| Git | Version control for code changes |
+| VS Code (Remote-SSH) | Edit and debug code directly on the Pi from a desktop |
+| V4L2 Utilities | Inspect and configure the USB camera device |
 
-* V2 (Virtual Network Computing)
-* Instead of relying on batteries, shift to adapter power supply.
+---
 
-```bash 
-Output	Good for Pi 4B!
-5V ⎓ 1A	❌ No
-5V ⎓ 2A	⚠️ Not recommended
-5V ⎓ 3A	✅ Good (OS, Camera and Running code)
-5V ⎓ 4A or higher	✅ Good (if we want to access other parts of the robo like servos and movements)
-```
+## Extras (Not mandatory, but good to use)
 
+- **VNC (Virtual Network Computing)** — remote desktop access to the Pi's GUI, useful for debugging vision output or GUI tools without a monitor attached.
+- **Use a wall adapter instead of batteries during development** — battery voltage sag under motor load can cause the Pi to brown out or corrupt the SD card mid-write. A stable adapter avoids this while you're actively coding/testing.
 
-Install V4L2 tools:
-v4l-utils is a collection of command-line utilities and libraries used to configure, test, and handle multimedia devices on Linux. It is specifically designed to work with the Video4Linux (V4L2) subsystem in the Linux kernel, which manages hardware like webcams, TV tuner cards, video capture cards, and remote controls.
+**Power supply reference for Raspberry Pi 4B:**
+
+| Output | Good for Pi 4B? |
+|---|---|
+| 5V ⎓ 1A | ❌ No |
+| 5V ⎓ 2A | ⚠️ Not recommended |
+| 5V ⎓ 3A | ✅ Good (OS, camera, running code) |
+| 5V ⎓ 4A or higher | ✅ Good (also covers servos and movement) |
+
+**Install V4L2 utilities:**
+
+`v4l-utils` is a collection of command-line tools for configuring, testing, and inspecting Video4Linux (V4L2) devices — webcams, capture cards, TV tuners, and remote controls.
 
 ```bash
 sudo apt install v4l-utils
 ```
-<img width="463" height="106" alt="image" src="https://github.com/user-attachments/assets/35bdedaf-f92e-4606-8325-72fbada8acf1" />
 
-Verify camera devices:
+<img width="463" height="106" alt="v4l-utils installation output" src="https://github.com/user-attachments/assets/35bdedaf-f92e-4606-8325-72fbada8acf1" />
+
+**Verify camera devices:**
 
 ```bash
 v4l2-ctl --list-devices
 ```
-
