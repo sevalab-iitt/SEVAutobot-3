@@ -30,7 +30,7 @@
 
 ---
 
-## Overview
+## [Overview](#https://www.hiwonder.com/products/turbopi)
 
 SEVAutobot-3 is a robotics research and education platform built on the **Hiwonder TurboPi** robotic car. It is powered by a **Raspberry Pi 4B (8 GB)** running **ROS2** and is designed to support a broad range of computer vision, autonomous navigation, and embodied AI experiments.
 
