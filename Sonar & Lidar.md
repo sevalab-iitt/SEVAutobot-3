@@ -564,9 +564,9 @@ Distance (cm)
 **Useful for:** sensor stability analysis, noise characterization, detecting outlier readings, verifying that a held distance is stable before running a full experiment.
 
 ```markdown
-![Distance Plot](images/<img width="2988" height="1403" alt="distance_plot" src="https://github.com/user-attachments/assets/418e363f-40fc-480c-9800-6e733fd95e6e" />
-)
+
 ```
+<img width="2988" height="1403" alt="distance_plot" src="https://github.com/user-attachments/assets/840bf3ee-b5cd-416e-8bca-65799c234213" />
 
 ---
 
@@ -597,6 +597,7 @@ A tight, symmetric histogram centred on the true distance means low noise. A wid
 ```markdown
 ![Histogram](images/histogram.png)
 ```
+<img width="2523" height="1403" alt="histogram" src="https://github.com/user-attachments/assets/b3852ee2-914f-4a9e-99ba-40ce8aeb793e" />
 
 ---
 
