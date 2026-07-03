@@ -185,6 +185,7 @@ sevalab-iitt/SEVAutobot-3/
     ├── System Architecture.md
     ├── System Setup.md
     ├── Troubleshooting & FAQ.md
+    ├── Sonar.md 
     └── Wiring Diagram.md
 ├── README.md
 └── LICENSE
