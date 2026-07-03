@@ -564,7 +564,7 @@ Distance (cm)
 **Useful for:** sensor stability analysis, noise characterization, detecting outlier readings, verifying that a held distance is stable before running a full experiment.
 
 ```markdown
-
+![Distance Plot](images/distance_plot.png)
 ```
 <img width="2988" height="1403" alt="distance_plot" src="https://github.com/user-attachments/assets/840bf3ee-b5cd-416e-8bca-65799c234213" />
 
@@ -622,6 +622,8 @@ Output: `Dataset/plots/sonar_heatmap.png`
 ```markdown
 ![Heatmap](images/sonar_heatmap.png)
 ```
+<img width="2751" height="1634" alt="sonar_heatmap" src="https://github.com/user-attachments/assets/f21b636d-8d8b-4e25-bcb2-776bc3adc721" />
+
 
 **Useful for:** rapid visual inspection across a long session, detecting measurement drift, environmental change detection, obstacle proximity patterns.
 
@@ -653,6 +655,8 @@ Bright regions = closer objects. Dark regions = far or empty.
 ```markdown
 ![Waterfall](images/sonar_waterfall.png)
 ```
+<img width="3480" height="1634" alt="sonar_waterfall" src="https://github.com/user-attachments/assets/5993b087-d279-4486-bca5-54e3412d3281" />
+
 
 **Useful for:** dynamic obstacle tracking, motion detection, temporal pattern analysis, visualizing what happens as the robot approaches or recedes from a surface.
 
@@ -678,6 +682,8 @@ Output: `Dataset/plots/sonar_scan.png`
 ```markdown
 ![Virtual Scan](images/sonar_scan.png)
 ```
+
+<img width="2111" height="2127" alt="sonar_scan" src="https://github.com/user-attachments/assets/00369bdb-c5c2-4b93-9016-7284d9cd900b" />
 
 > **Important:** This visualization is a **virtual scan** constructed from sequential measurements. It does not physically rotate the sensor. The result is an approximation and should not be treated as equivalent to a true multi-beam LiDAR sweep. For a genuine scan, the sensor would need to be mounted on a servo, or the robot would need to physically rotate at a fixed location while measurements are logged per degree.
 
@@ -710,6 +716,8 @@ Output: `Dataset/plots/occupancy_map.png`
 ```markdown
 ![Occupancy Map](images/occupancy_map.png)
 ```
+<img width="1989" height="2040" alt="occupancy_map" src="https://github.com/user-attachments/assets/308fc333-e73a-40ad-9ac5-da18dab31ac4" />
+
 
 **Applications:** path planning, autonomous navigation, localization, SLAM, exploration.
 
