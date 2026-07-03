@@ -855,23 +855,4 @@ The framework built here is a complete sensor characterization pipeline. Several
 
 ---
 
-### Image Placeholders
-
-Once terminal screenshots, plots, and hardware photos are taken, insert them at the relevant sections using:
-
-```markdown
-![Sonar Hardware](images/sonar_hardware.png)
-![Sensor Validation Output](images/chk_output.png)
-![Logger Terminal](images/logger_terminal.png)
-![Distance Plot](images/distance_plot.png)
-![Histogram](images/histogram.png)
-![Heatmap](images/sonar_heatmap.png)
-![Waterfall](images/sonar_waterfall.png)
-![Virtual Scan](images/sonar_scan.png)
-![Occupancy Grid](images/occupancy_map.png)
-![Dataset Structure](images/dataset_structure.png)
-```
-
----
-
 *The ultrasonic sensor is not the most glamorous piece of hardware on the TurboPi — but a single 1D distance stream, logged carefully and visualized thoughtfully, can support a surprising range of robotics experiments. The sensor's simplicity is the point: it forces algorithmic thinking that a richer sensor would obscure.*
