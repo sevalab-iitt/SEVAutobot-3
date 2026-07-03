@@ -564,7 +564,8 @@ Distance (cm)
 **Useful for:** sensor stability analysis, noise characterization, detecting outlier readings, verifying that a held distance is stable before running a full experiment.
 
 ```markdown
-![Distance Plot](images/distance_plot.png)
+![Distance Plot](images/<img width="2988" height="1403" alt="distance_plot" src="https://github.com/user-attachments/assets/418e363f-40fc-480c-9800-6e733fd95e6e" />
+)
 ```
 
 ---
