@@ -18,6 +18,7 @@
 - [Storage Configuration](#storage-configuration)
 - [ROS Status](#ros-status)
 - [Recommended Development Tools](#recommended-development-tools)
+- [Remote Graphical Interface Access (SSH & VNC)](#remote-graphical-interface-access (SSH & VNC))
 - [Extras](#extras-not-mandatory-but-good-to-use)
 
 ---
@@ -206,6 +207,299 @@ Future integration may include **ROS 2 Humble** for advanced robotics applicatio
 | VS Code (Remote-SSH) | Edit and debug code directly on the Pi from a desktop |
 | V4L2 Utilities | Inspect and configure the USB camera device |
 
+---
+
+# Remote Graphical Interface Access (SSH & VNC)
+
+## Overview
+
+The TurboPi can be accessed remotely using two different methods:
+
+- **SSH (Secure Shell):** Provides terminal access for executing commands, running scripts, and managing the system.
+- **VNC (Virtual Network Computing):** Provides full access to the TurboPi desktop environment, allowing interaction with graphical applications.
+
+During setup, both methods were configured and tested.
+
+---
+
+# 1. Verify Network Connectivity
+
+Check the current IP address of the TurboPi.
+
+```bash
+hostname -I
+```
+
+Example:
+
+```text
+192.168.1.108
+```
+
+Alternatively,
+
+```bash
+ip addr
+```
+
+---
+
+# 2. Verify SSH Service
+
+Check whether the SSH server is running.
+
+```bash
+sudo systemctl status ssh
+```
+
+Expected output:
+
+```text
+Active: active (running)
+```
+
+If SSH is disabled:
+
+```bash
+sudo systemctl enable ssh
+sudo systemctl start ssh
+```
+
+---
+
+# 3. Connect from Windows
+
+Open PowerShell or Windows Terminal.
+
+```powershell
+ssh pi@<TurboPi-IP>
+```
+
+Example:
+
+```powershell
+ssh pi@192.168.1.108
+```
+
+For graphical forwarding:
+
+```powershell
+ssh -X pi@192.168.1.108
+```
+
+or
+
+```powershell
+ssh -Y pi@192.168.1.108
+```
+
+---
+
+# 4. Verify X11 Forwarding
+
+Check the display environment.
+
+```bash
+echo $DISPLAY
+```
+
+Successful output:
+
+```text
+localhost:10.0
+```
+
+Verify SSH configuration.
+
+```bash
+grep X11Forwarding /etc/ssh/sshd_config
+```
+
+Expected:
+
+```text
+X11Forwarding yes
+```
+
+---
+
+# 5. Install X11 Test Applications
+
+Install the standard X11 testing utilities.
+
+```bash
+sudo apt update
+sudo apt install x11-apps
+```
+
+Useful applications include:
+
+- xclock
+- xeyes
+- xlogo
+- xcalc
+
+---
+
+# 6. Testing X11 Forwarding
+
+Launch a graphical application.
+
+```bash
+xclock
+```
+
+or
+
+```bash
+xeyes
+```
+
+If configured correctly, the application window appears on the Windows machine.
+
+---
+
+# 7. Installing a GUI Text Editor
+
+The default Raspberry Pi OS may not include a graphical text editor.
+
+Install Mousepad.
+
+```bash
+sudo apt install mousepad
+```
+
+Launch it.
+
+```bash
+mousepad
+```
+
+---
+
+# 8. VNC Server Verification
+
+Check the VNC service.
+
+```bash
+sudo systemctl status vncserver-x11-serviced
+```
+
+Expected:
+
+```text
+Active: active (running)
+```
+
+If required:
+
+```bash
+sudo systemctl enable vncserver-x11-serviced
+sudo systemctl restart vncserver-x11-serviced
+```
+
+---
+
+# 9. Accessing the Desktop
+
+Open **RealVNC Viewer** on Windows.
+
+Connect to
+
+```text
+<TurboPi-IP>
+```
+
+Login using the Raspberry Pi credentials.
+
+This provides complete access to the TurboPi desktop environment.
+
+---
+
+# Troubleshooting
+
+## GUI application reports:
+
+```text
+Error: Can't open display
+```
+
+Possible causes:
+
+- VcXsrv is not running.
+- SSH connection was established without the `-X` or `-Y` option.
+- Windows Firewall is blocking VcXsrv.
+- X11 forwarding is disabled in `sshd_config`.
+
+---
+
+## Verify Current Display
+
+```bash
+echo $DISPLAY
+```
+
+Expected:
+
+```text
+localhost:10.0
+```
+
+---
+
+## Verify SSH Configuration
+
+```bash
+grep X11Forwarding /etc/ssh/sshd_config
+```
+
+Expected:
+
+```text
+X11Forwarding yes
+```
+
+---
+
+## Verify SSH Connection
+
+```bash
+echo $SSH_CONNECTION
+```
+
+---
+
+# Important Observation
+
+Although SSH X11 forwarding was successfully configured (`DISPLAY=localhost:10.0`), several graphical applications (such as OpenCV windows or camera preview applications) could not reliably open over the SSH session.
+
+This behavior is expected because many TurboPi applications use OpenCV (`cv2.imshow()`), GTK, or other graphical libraries that are designed to render directly on the local display (`:0`) instead of through an X11-forwarded session.
+
+For these applications:
+
+- **SSH** is recommended for terminal access, code execution, package management, and algorithm development.
+- **VNC** is recommended for interacting with the complete desktop environment and running GUI-based applications.
+- Camera visualization and graphical outputs are more reliably accessed through **VNC** or by using a network video streaming solution (e.g., MJPEG streaming) instead of X11 forwarding.
+
+---
+
+# Summary
+
+| Feature | SSH | VNC |
+|----------|-----|-----|
+| Terminal Access | ✅ | ✅ |
+| Execute Python Scripts | ✅ | ✅ |
+| File Management | ✅ | ✅ |
+| Full Desktop Access | ❌ | ✅ |
+| OpenCV GUI (`cv2.imshow`) | Not Recommended | ✅ |
+| Camera Preview | Not Recommended | ✅ |
+| Remote Development | ✅ | ✅ |
+
+---
+
+# Conclusion
+
+SSH and X11 forwarding were successfully configured and verified. Standard X11 forwarding works for supported graphical applications; however, GUI-intensive applications (such as OpenCV camera windows) are not reliably displayed through SSH. Therefore, VNC remains the preferred solution for accessing the TurboPi graphical interface, while SSH is used for command-line administration, software development, and remote execution of algorithms.
 ---
 
 ## Extras (Not mandatory, but good to use)
