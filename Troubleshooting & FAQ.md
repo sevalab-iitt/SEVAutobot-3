@@ -229,8 +229,10 @@ After sitting unused for about four days, the robot booted normally, but the dis
 
 In short: the robot was alive and reachable — it just had no visible desktop, over HDMI or VNC.
 
-> 📷 *[Insert HDMI black screen photo here]*
-> 📷 *[Insert VNC "Cannot currently show the desktop" screenshot here]*
+<img width="2048" height="1536" alt="image" src="https://github.com/user-attachments/assets/d42476a3-07be-480a-a0df-a810f28e9f15" />
+
+<img width="2048" height="1536" alt="image" src="https://github.com/user-attachments/assets/1f74fbf0-7fa3-4bef-93b6-6d3d07825c64" />
+
 
 ### Initial Assumptions
 
@@ -280,7 +282,8 @@ Error getting user list from org.freedesktop.Accounts
 
 This looked alarming, but turned out to be a symptom, not the root cause.
 
-> 📷 *[Insert journalctl log output screenshot here]*
+<img width="454" height="186" alt="image" src="https://github.com/user-attachments/assets/4df06604-e663-4477-b445-88c40724189e" />
+
 
 ### Step 3 — Check for Other Failed Services
 
@@ -294,6 +297,7 @@ man-db.service
 nvidia-persistenced.service
 systemd-modules-load.service
 ```
+<img width="552" height="314" alt="image" src="https://github.com/user-attachments/assets/6bda0857-57cf-4ff9-91eb-56fe061c5abf" />
 
 The `nvidia-persistenced.service` entry looked suspicious at first glance (this is a Raspberry Pi, not an NVIDIA system), but it was unrelated to the display issue — a leftover/irrelevant service failure, not the cause.
 
@@ -308,6 +312,7 @@ df -h
 Filesystem      Size  Used  Avail  Use%
 /dev/root       8.5G  8.3G     0   100%
 ```
+<img width="377" height="142" alt="image" src="https://github.com/user-attachments/assets/21a52246-e2bb-4c27-a35f-c7413414157d" />
 
 This is where the investigation actually broke open. The root filesystem was **completely full** — 100% usage, zero bytes available.
 
@@ -337,10 +342,28 @@ sudo du -xh / --max-depth=1 2>/dev/null | sort -h
 /var    340M
 /root   116M
 ```
+<img width="486" height="191" alt="image" src="https://github.com/user-attachments/assets/9050bc95-6133-4e03-9c9d-ad58b7b7bd0c" />
+
 
 Curiously, `du` reported only about **5.9 GB** used, while `df` reported **8.3 GB**. That gap pointed to space being consumed by something `du` wasn't accounting for directly at that depth (e.g., deleted-but-still-open files, or nested large files) — a strong hint that cleanup, not a fsck or reflash, was the fix.
 
 ### Step 6 — Delete Unnecessary Files
+<img width="443" height="158" alt="image" src="https://github.com/user-attachments/assets/48909ea3-98b1-4630-af5b-c6ac293c7505" />
+
+<img width="392" height="16" alt="image" src="https://github.com/user-attachments/assets/507c9c13-551f-4061-b403-078da3422417" />
+
+<img width="449" height="57" alt="image" src="https://github.com/user-attachments/assets/80c46d45-e9c3-41af-9795-0e6725aacf51" />
+
+<img width="374" height="128" alt="image" src="https://github.com/user-attachments/assets/26f2ecd9-0557-47bd-9037-3114fd4b3a59" />
+
+After this clean up i also uninstalled some nvidia packages installed as they were not needed and were taking space.
+
+<img width="458" height="185" alt="image" src="https://github.com/user-attachments/assets/e935a052-c8f4-4a70-80b4-1e11a3be3aff" />
+
+<img width="457" height="185" alt="image" src="https://github.com/user-attachments/assets/a3296ea2-8d3f-4fe6-8289-a4778ab97c22" />
+
+<img width="461" height="460" alt="image" src="https://github.com/user-attachments/assets/33492b45-4241-4f86-813a-ae086f8fd217" />
+
 
 Large, no-longer-needed files were removed. After cleanup:
 
@@ -356,7 +379,8 @@ Filesystem      Size  Used  Avail  Use%
 
 More than **2.4 GB** was recovered.
 
-> 📷 *[Insert before/after df -h comparison screenshot here]*
+<img width="380" height="128" alt="image" src="https://github.com/user-attachments/assets/60e1f6ba-0f68-4fbf-afc3-160b30846860" />
+
 
 ### Step 7 — Reboot
 
