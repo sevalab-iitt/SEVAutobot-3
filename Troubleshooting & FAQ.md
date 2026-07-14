@@ -1,7 +1,7 @@
 # Troubleshooting & FAQ
 ### TurboPi Autonomous Robot Platform
 
-> Common problems, their causes, and how to fix them — organized by category so you can jump straight to what's wrong.
+> Common problems, their causes, and how to fix them — organized by category so you can jump straight to what's wrong. Includes a real-world case study on diagnosing a black-screen display failure.
 
 ---
 
@@ -13,6 +13,7 @@
 - [Software & Programs](#software--programs)
 - [Camera, Vision & Screenshots](#camera-vision--screenshots)
 - [SD Card & Boot](#sd-card--boot)
+- [Case Study: Display Not Working (HDMI & VNC Black Screen)](#case-study-display-not-working-hdmi--vnc-black-screen)
 - [FAQ](#faq)
 
 ---
@@ -123,7 +124,7 @@ Then retry the `raspi-config` Wi-Fi setup above.
 - Uneven motor wear or one motor drawing more current than others
 
 **Fix:**
-- Confirm each of the 4 mecanum wheels is mounted per the manufacturer's wheel-position diagram (swapping even two wheels causes drift or sideways drift instead of straight motion).
+- Confirm each of the 4 mecanum wheels is mounted per the manufacturer's wheel-position diagram (swapping even two wheels causes drift or sideways motion instead of straight motion).
 - Test each motor individually to isolate a weak one.
 
 ---
@@ -206,7 +207,206 @@ If the screenshot comes out blank or scrot errors out, you're likely running it 
 **Fix:**
 - Always shut down with `sudo shutdown -h now` before disconnecting power.
 - If the Pi won't boot, remove the SD card, check it on another computer with `fsck`/a card-health tool, and reflash the OS image if it's corrupted.
-- Consider running datasets/logs from the external USB drive (see Storage Configuration in the software setup doc) instead of the SD card to reduce wear.
+- Consider running datasets/logs from an external USB drive (see *Storage Configuration* in the software setup doc) instead of the SD card to reduce wear.
+
+---
+
+## Case Study: Display Not Working (HDMI & VNC Black Screen)
+
+This section walks through a real diagnostic session — start to finish — for a display failure that looked like a hardware or driver problem but turned out to be something else entirely. It's included as a worked example of how to approach TurboPi issues methodically instead of guessing.
+
+### The Problem
+
+After sitting unused for about four days, the robot booted normally, but the display was dead on arrival.
+
+**Symptoms observed:**
+- HDMI monitor stayed black.
+- Screen flickered briefly between black and a small white flash.
+- The robot's boot sound played normally.
+- SSH connected without any issues.
+- The TurboPi mobile app worked fine.
+- RealVNC connected, but showed the message: **"Cannot currently show the desktop."**
+
+In short: the robot was alive and reachable — it just had no visible desktop, over HDMI or VNC.
+
+> 📷 *[Insert HDMI black screen photo here]*
+> 📷 *[Insert VNC "Cannot currently show the desktop" screenshot here]*
+
+### Initial Assumptions
+
+Before touching anything, several possible causes were on the table:
+
+1. Corrupted operating system
+2. HDMI cable or monitor fault
+3. Raspberry Pi HDMI configuration issue
+4. LightDM (Display Manager) failure
+5. Desktop environment crash
+6. SD card corruption
+7. Full filesystem
+
+The obvious suspect was the display manager, since that's usually where "black screen" problems live. That assumption turned out to be a red herring — but ruling it out was still the right first move.
+
+### Step 1 — Verify LightDM Is Running
+
+```bash
+systemctl status lightdm
+```
+
+**Output:**
+```
+Active: active (running)
+```
+
+At a glance, LightDM looked healthy. But a status of "active" doesn't mean it's been *stable* — it just means it's running *right now*. That distinction mattered here, because the logs told a different story.
+
+### Step 2 — Check LightDM Logs
+
+```bash
+journalctl -u lightdm -b --no-pager
+```
+
+**Key lines:**
+```
+Main process exited
+status=1/FAILURE
+Scheduled restart job
+```
+
+LightDM was crashing and restarting itself in a loop — which explained the flicker between black and a white flash on the monitor. There were also messages like:
+
+```
+Error getting user list from org.freedesktop.Accounts
+```
+
+This looked alarming, but turned out to be a symptom, not the root cause.
+
+> 📷 *[Insert journalctl log output screenshot here]*
+
+### Step 3 — Check for Other Failed Services
+
+```bash
+systemctl --failed
+```
+
+**Output:**
+```
+man-db.service
+nvidia-persistenced.service
+systemd-modules-load.service
+```
+
+The `nvidia-persistenced.service` entry looked suspicious at first glance (this is a Raspberry Pi, not an NVIDIA system), but it was unrelated to the display issue — a leftover/irrelevant service failure, not the cause.
+
+### Step 4 — Check Disk Usage
+
+```bash
+df -h
+```
+
+**Output:**
+```
+Filesystem      Size  Used  Avail  Use%
+/dev/root       8.5G  8.3G     0   100%
+```
+
+This is where the investigation actually broke open. The root filesystem was **completely full** — 100% usage, zero bytes available.
+
+### Why a Full Disk Breaks the Display
+
+When the root filesystem hits 100%:
+
+- Temporary files can't be created.
+- Desktop sessions fail to start.
+- LightDM crashes and restarts repeatedly.
+- RealVNC can't spin up a desktop session.
+- HDMI frequently shows a black screen.
+- GUI applications fail outright.
+
+Meanwhile, **SSH keeps working**, because it needs almost no disk activity to function — which is exactly why the robot seemed "half-broken" instead of fully dead.
+
+### Step 5 — Locate What Was Eating Space
+
+```bash
+sudo du -xh / --max-depth=1 2>/dev/null | sort -h
+```
+
+**Output:**
+```
+/usr    4.9G
+/home   537M
+/var    340M
+/root   116M
+```
+
+Curiously, `du` reported only about **5.9 GB** used, while `df` reported **8.3 GB**. That gap pointed to space being consumed by something `du` wasn't accounting for directly at that depth (e.g., deleted-but-still-open files, or nested large files) — a strong hint that cleanup, not a fsck or reflash, was the fix.
+
+### Step 6 — Delete Unnecessary Files
+
+Large, no-longer-needed files were removed. After cleanup:
+
+```bash
+df -h
+```
+
+**Output:**
+```
+Filesystem      Size  Used  Avail  Use%
+/dev/root       8.5G  5.9G   2.3G   73%
+```
+
+More than **2.4 GB** was recovered.
+
+> 📷 *[Insert before/after df -h comparison screenshot here]*
+
+### Step 7 — Reboot
+
+```bash
+sudo reboot
+```
+
+**Result after reboot:**
+- HDMI output returned.
+- Desktop loaded normally.
+- RealVNC displayed the desktop correctly.
+- LightDM ran without crashing.
+- The robot operated normally end to end.
+
+> 📷 *[Insert working desktop / HDMI output screenshot here]*
+> 📷 *[Insert working VNC session screenshot here]*
+
+### Root Cause
+
+It was **not**:
+- Raspberry Pi hardware
+- The HDMI cable
+- The monitor
+- LightDM configuration
+- OS corruption
+
+It **was**:
+
+> **The root filesystem was completely full (100% usage), which prevented the graphical desktop from starting.**
+
+### Useful Diagnostic Commands (Reference)
+
+| Purpose | Command |
+|---|---|
+| Check disk usage | `df -h` |
+| Find largest directories | `sudo du -xh / --max-depth=1 \| sort -h` |
+| Find largest individual files | `sudo find / -type f -size +100M 2>/dev/null \| xargs ls -lh` |
+| Check LightDM status | `systemctl status lightdm` |
+| View LightDM logs | `journalctl -u lightdm -b` |
+| Check failed services | `systemctl --failed` |
+| Clean package cache | `sudo apt clean` |
+| Remove unused packages | `sudo apt autoremove --purge` |
+| Reduce journal log size | `sudo journalctl --vacuum-size=100M` |
+
+### Lessons Learned
+
+- Always check `df -h` before assuming the OS is corrupted.
+- A full filesystem can silently break the desktop while leaving SSH fully functional — don't let a working SSH session fool you into ruling out disk space.
+- LightDM crash loops are frequently a *symptom* of a deeper resource issue, not the actual root cause.
+- Maintain at least **1–2 GB of free storage** on the Raspberry Pi at all times to avoid this class of failure entirely.
 
 ---
 
@@ -235,3 +435,6 @@ Lighting changed. The color-based detection in `lab_config.yaml` is calibrated f
 
 **Q: I get "No wireless interface found" — is my Wi-Fi hardware broken?**
 Not necessarily. Run `rfkill list` first — it's very likely just software-blocked, which `sudo rfkill unblock wifi` fixes in seconds.
+
+**Q: My HDMI screen is black and VNC says "Cannot currently show the desktop" — is my Pi bricked?**
+Almost certainly not. Check disk space first with `df -h`. A full root filesystem is a common cause of exactly this symptom (SSH still works, but the desktop won't start). See the [Case Study](#case-study-display-not-working-hdmi--vnc-black-screen) above for the full walkthrough.
